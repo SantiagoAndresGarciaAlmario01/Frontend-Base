@@ -1,0 +1,1262 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import BrandLogo from "@/components/BrandLogo";
+import {
+  getStoredDishes,
+  DishItem,
+  UserProfile,
+} from "@/lib/ollacercana-store";
+import ReservePortionModal from "@/components/modals/ReservePortionModal";
+import ReputationModal from "@/components/modals/ReputationModal";
+import ReportModal from "@/components/modals/ReportModal";
+import ChatModal from "@/components/modals/ChatModal";
+import PhoneVerificationModal from "@/components/modals/PhoneVerificationModal";
+import RatingModal from "@/components/modals/RatingModal";
+import {
+  Search,
+  MapPin,
+  ShoppingBag,
+  User,
+  Heart,
+  Star,
+  Plus,
+  Minus,
+  Trash2,
+  ChevronDown,
+  Utensils,
+  Soup,
+  Vegan,
+  Cake,
+  SlidersHorizontal,
+  Home,
+  ClipboardList,
+  Sparkles,
+  CheckCircle2,
+  ChefHat,
+  Flag,
+  Flame,
+} from "lucide-react";
+
+interface CartItem {
+  id: number;
+  name: string;
+  cook: string;
+  price: number;
+  image: string;
+  quantity: number;
+}
+
+export default function MenuPage() {
+  const [activeFilter, setActiveFilter] = useState("Todos");
+  const [selectedDietaryTag, setSelectedDietaryTag] = useState<string>("Todos");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [storedDishesList, setStoredDishesList] = useState<DishItem[]>([]);
+
+  // Spec Modal States
+  const [reserveModalDish, setReserveModalDish] = useState<DishItem | null>(null);
+  const [reputationCook, setReputationCook] = useState<{ name: string; avatar: string; id: string } | null>(null);
+  const [reportTarget, setReportTarget] = useState<{ title: string; id: string; type: "publicacion" | "usuario" } | null>(null);
+  const [chatReservationId, setChatReservationId] = useState<string | null>(null);
+  const [phoneVerifyOpen, setPhoneVerifyOpen] = useState(false);
+  const [ratingTarget, setRatingTarget] = useState<{ reservationId: string; cookId: string } | null>(null);
+
+  const currentUser: UserProfile = {
+    name: "Ana María",
+    email: "anamaria@example.com",
+    phone: "3001234567",
+    phoneVerified: true,
+    role: "comprador",
+    residentialComplex: "Conjunto San Luis",
+  };
+
+  React.useEffect(() => {
+    setStoredDishesList(getStoredDishes());
+  }, []);
+
+  const [cart, setCart] = useState<CartItem[]>([
+    {
+      id: 1,
+      name: "Ajiaco de la casa",
+      cook: "Doña Rosa",
+      price: 18000,
+      image: "/images/menu_ajiaco.jpg",
+      quantity: 1,
+    },
+  ]);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+
+  const dishes = [
+    {
+      id: 1,
+      name: "Ajiaco de la casa",
+      category: "Sopas",
+      badge: "El favorito ♡",
+      price: 18000,
+      formattedPrice: "$18.000",
+      image: "/images/menu_ajiaco.jpg",
+      cook: "Doña Rosa",
+      cookAvatar: "/images/dona_rosa_mascot.jpg",
+      rating: "4,9",
+      reviews: "120",
+      distance: "A 350 m",
+    },
+    {
+      id: 2,
+      name: "Bandeja casera",
+      category: "Almuerzos",
+      badge: "Quedan 5",
+      price: 22000,
+      formattedPrice: "$22.000",
+      image: "/images/menu_cazuela.jpg",
+      cook: "Don Carlos",
+      cookAvatar: "/images/abuelita_3d_mascot.jpg",
+      rating: "4,8",
+      reviews: "95",
+      distance: "A 600 m",
+    },
+    {
+      id: 3,
+      name: "Pollo guisado",
+      category: "Almuerzos",
+      badge: null,
+      price: 17000,
+      formattedPrice: "$17.000",
+      image: "/images/dish_pollo_chalk.jpg",
+      cook: "Doña Marta",
+      cookAvatar: "/images/dona_rosa_mascot.jpg",
+      rating: "4,8",
+      reviews: "87",
+      distance: "A 800 m",
+    },
+    {
+      id: 4,
+      name: "Lentejas con arroz",
+      category: "Vegetariano",
+      badge: null,
+      price: 15000,
+      formattedPrice: "$15.000",
+      image: "/images/hero_plate_gourmet.jpg",
+      cook: "María Elena",
+      cookAvatar: "/images/abuelita_3d_mascot.jpg",
+      rating: "4,7",
+      reviews: "73",
+      distance: "A 1,2 km",
+    },
+    {
+      id: 5,
+      name: "Sancocho de pollo",
+      category: "Sopas",
+      badge: "Hecho hoy ♡",
+      price: 19000,
+      formattedPrice: "$19.000",
+      image: "/images/olla_dish_1.jpg",
+      cook: "Don Luis",
+      cookAvatar: "/images/dona_rosa_mascot.jpg",
+      rating: "4,9",
+      reviews: "101",
+      distance: "A 1,1 km",
+    },
+    {
+      id: 6,
+      name: "Arroz con leche",
+      category: "Postres",
+      badge: null,
+      price: 6000,
+      formattedPrice: "$6.000",
+      image: "/images/menu_postre.jpg",
+      cook: "Doña Lucía",
+      cookAvatar: "/images/abuelita_3d_mascot.jpg",
+      rating: "4,8",
+      reviews: "64",
+      distance: "A 900 m",
+    },
+  ];
+
+  const addToCart = (dish: (typeof dishes)[0]) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === dish.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === dish.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [
+        ...prev,
+        {
+          id: dish.id,
+          name: dish.name,
+          cook: dish.cook,
+          price: dish.price,
+          image: dish.image,
+          quantity: 1,
+        },
+      ];
+    });
+  };
+
+  const updateQuantity = (id: number, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.id === id) {
+            const newQty = item.quantity + delta;
+            return newQty > 0 ? { ...item, quantity: newQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  const removeFromCart = (id: number) => {
+    setCart((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const clearCart = () => setCart([]);
+
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const deliveryFee = cart.length > 0 ? 3000 : 0;
+  const total = subtotal + deliveryFee;
+  const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Combine static dishes with dynamic dishes from local store
+  const dynamicDishes: DishItem[] = (storedDishesList.length > 0 ? storedDishesList : dishes.map((d) => ({
+    id: `dish-${d.id}`,
+    name: d.name,
+    category: d.category as any,
+    dietaryTags: (d.category === "Vegetariano" ? ["Vegetariano", "Vegano"] : (d.name.includes("Pollo") ? ["Sin Gluten"] : [])) as any,
+    badge: d.badge,
+    price: d.price,
+    formattedPrice: d.formattedPrice,
+    image: d.image,
+    cook: d.cook,
+    cookId: d.cook.toLowerCase().replace(/\s+/g, "-"),
+    cookAvatar: d.cookAvatar,
+    rating: d.rating,
+    reviews: parseInt(d.reviews),
+    distance: d.distance,
+    distanceMeters: parseInt(d.distance),
+    residentialComplex: "Conjunto San Luis",
+    totalPortions: 5,
+    availablePortions: d.badge === "Quedan 5" ? 5 : (d.name.includes("Lentejas") ? 1 : 4),
+    reservedPortions: 1,
+    status: "DISPONIBLE" as const,
+    description: "Delicioso plato casero preparado hoy.",
+    createdAt: new Date().toISOString(),
+  })));
+
+  const filteredDishes = dynamicDishes.filter((dish) => {
+    const matchesCategory =
+      activeFilter === "Todos" || activeFilter === "Filtros" || dish.category === activeFilter;
+    const matchesTag =
+      selectedDietaryTag === "Todos" ||
+      (dish.dietaryTags && dish.dietaryTags.includes(selectedDietaryTag as any));
+    const matchesSearch =
+      dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dish.cook.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesTag && matchesSearch;
+  });
+
+  const marqueeItemsRow1 = [
+    { title: "Ajiaco Santafereño", subtitle: "Doña Carmen • Salitre", image: "/images/menu_ajiaco.jpg", badge: "Sopas" },
+    { title: "Bandeja Criolla", subtitle: "Señora Martha • El Rosal", image: "/images/menu_cazuela.jpg", badge: "Almuerzos" },
+    { title: "Pollo al Romero", subtitle: "Chef Luisa • Modelo", image: "/images/hero_plate_gourmet.jpg", badge: "Especiales" },
+    { title: "Flan de Caramelo", subtitle: "Abuela Beatriz • Torre 3", image: "/images/menu_postre.jpg", badge: "Postres" },
+    { title: "Pollo Guisado", subtitle: "Doña Marta • Norte", image: "/images/dish_pollo_chalk.jpg", badge: "Guisos" },
+    { title: "Sancocho Trifásico", subtitle: "Don Luis • Colina", image: "/images/olla_dish_1.jpg", badge: "Sopas" },
+  ];
+
+  const marqueeItemsRow2 = [
+    { title: "Abuela OllaCercana", subtitle: "Mascota Oficial", image: "/images/abuelita_3d_mascot.jpg", badge: "Comunidad" },
+    { title: "Doña Rosa Mascot", subtitle: "Sazón de Hogar", image: "/images/dona_rosa_mascot.jpg", badge: "Cocinas" },
+    { title: "Sancocho de Gallina", subtitle: "Cocina Tradicional", image: "/images/menu_ajiaco.jpg", badge: "Recetas" },
+    { title: "Cazuela Paisa", subtitle: "María Elena • Salitre", image: "/images/olla_dish_2.jpg", badge: "Guisos" },
+    { title: "Pollo Dorado", subtitle: "Doña Marta • El Rosal", image: "/images/hero_plate_gourmet.jpg", badge: "Almuerzos" },
+    { title: "Postres de Natas", subtitle: "Doña Lucía • Torre 2", image: "/images/menu_postre.jpg", badge: "Dulces" },
+  ];
+
+  return (
+    <div className="relative min-h-screen bg-[#F4EFE6] text-[#2C241E] font-['Outfit',sans-serif] selection:bg-[#C84B31] selection:text-white overflow-x-clip">
+      
+      {/* ── SUNLIT VINTAGE FLORAL KITCHEN BACKGROUND IMAGE (EXACT REFERENCE MATCH) ── */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <Image
+          src="/images/libreton_kitchen_bg.jpg"
+          alt="Sunlit Vintage Kitchen Background with Floral Ceramic Tiles"
+          fill
+          priority
+          className="object-cover object-center filter brightness-[1.02] contrast-[1.02]"
+        />
+        {/* Soft Ambient Overlay for Optimal Content Legibility */}
+        <div className="absolute inset-0 bg-radial from-transparent via-white/10 to-black/15 pointer-events-none" />
+      </div>
+
+      {/* ── 1. TOP NAVIGATION BAR ── */}
+      <header className="sticky top-0 z-40 bg-white border-b border-stone-200/80 shadow-xs px-4 md:px-8 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          {/* Brand Logo */}
+          <Link href="/" className="group shrink-0 flex items-center">
+            <BrandLogo size="sm" showTagline={false} />
+          </Link>
+
+          {/* Location Selector */}
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 border border-stone-200 text-xs font-semibold text-stone-700 cursor-pointer hover:bg-stone-200/60 transition-colors">
+            <MapPin className="w-3.5 h-3.5 text-[#C84B31]" />
+            <span>Bogotá · Tu barrio</span>
+            <ChevronDown className="w-3.5 h-3.5 text-stone-500" />
+          </div>
+
+          {/* Center Search Link & Nav */}
+          <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-stone-600">
+            <a
+              href="#explorar"
+              className="flex items-center gap-1.5 hover:text-[#C84B31] transition-colors"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Explorar</span>
+            </a>
+            <Link
+              href="/cocineras-cercanas"
+              className="flex items-center gap-1.5 hover:text-[#C84B31] transition-colors"
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span>Cocinas cercanas</span>
+            </Link>
+            <Link
+              href="/cuenta/reservas"
+              className="flex items-center gap-1.5 hover:text-[#C84B31] transition-colors"
+            >
+              <ClipboardList className="w-3.5 h-3.5" />
+              <span>Mis pedidos</span>
+            </Link>
+          </nav>
+
+          {/* Right User Actions */}
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Cart Icon */}
+            <a
+              href="#cart-section"
+              className="relative p-2 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors"
+            >
+              <ShoppingBag className="w-5 h-5 text-stone-800" />
+              {totalCartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#C84B31] text-white text-[11px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                  {totalCartCount}
+                </span>
+              )}
+            </a>
+
+            {/* User Profile */}
+            <Link
+              href="/cuenta/perfil"
+              className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-full bg-stone-100 border border-stone-200 text-xs font-semibold text-stone-700 hover:bg-stone-200/60 transition-colors"
+            >
+              <div className="w-7 h-7 rounded-full overflow-hidden relative border border-stone-300">
+                <Image
+                  src="/images/dona_rosa_mascot.jpg"
+                  alt="Ana María Avatar"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <span className="hidden md:inline">Ana María</span>
+              <ChevronDown className="w-3 h-3 text-stone-500" />
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* ── MAIN CONTENT CONTAINER WITH Subtle Brick/Paper Wall Background ── */}
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-8">
+        {/* ── 2. HERO CHALKBOARD HANGING BANNERS ROW ── */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Left Large Hanging Chalkboard Sign */}
+          <div className="lg:col-span-8 relative bg-[#1E2022] border-4 border-[#4A3728] rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden flex flex-col justify-between min-h-[220px]">
+            {/* Hanging Hooks & Rope Details on Top */}
+            <div className="absolute top-2 left-10 flex items-center gap-2 z-10">
+              <div className="w-3 h-3 rounded-full bg-stone-400 border-2 border-stone-700 shadow-inner" />
+              <div className="w-0.5 h-4 bg-stone-600 shadow-xs" />
+            </div>
+            <div className="absolute top-2 right-16 flex items-center gap-2 z-10">
+              <div className="w-3 h-3 rounded-full bg-stone-400 border-2 border-stone-700 shadow-inner" />
+              <div className="w-0.5 h-4 bg-stone-600 shadow-xs" />
+            </div>
+
+            {/* Red Checkered Napkin Hanging Accent over top-right corner */}
+            <div className="absolute top-0 right-0 w-24 h-24 pointer-events-none overflow-hidden z-20">
+              <div className="w-32 h-32 bg-[#C84B31] border-2 border-stone-900 rotate-45 translate-x-12 -translate-y-16 shadow-lg flex items-end justify-center pb-2">
+                <div className="w-full h-full bg-[radial-gradient(#fff_20%,transparent_20%)] bg-[size:10px_10px] opacity-30" />
+              </div>
+            </div>
+
+            {/* Chalkboard Content */}
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-lg">
+                <div className="flex items-center gap-3">
+                  {/* Steaming pot chalk drawing icon */}
+                  <div className="w-12 h-12 flex items-center justify-center">
+                    <svg
+                      viewBox="0 0 64 64"
+                      className="w-10 h-10 stroke-[#E25B45] fill-none stroke-[2.5] stroke-linecap-round"
+                    >
+                      <path d="M16 28h32v20a8 8 0 0 1-8 8H24a8 8 0 0 1-8-8V28z" />
+                      <path d="M12 28h40" />
+                      <path d="M8 32h8M48 32h8" />
+                      {/* Steam lines */}
+                      <path d="M24 16c2-3 0-6 2-9M32 16c2-3 0-6 2-9M40 16c2-3 0-6 2-9" className="stroke-[#F4C430]" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h1 className="font-['Caveat',cursive] text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-wide leading-none">
+                      Hoy se come rico.
+                    </h1>
+                    {/* Chalk underline stroke */}
+                    <div className="w-48 h-1.5 bg-[#F4C430] rounded-full mt-1 rotate-[-1deg]" />
+                  </div>
+                </div>
+
+                <p className="text-stone-300 font-['Caveat',cursive] text-xl sm:text-2xl pt-2 font-normal">
+                  Comida de casa, hecha por tus vecinos.
+                </p>
+              </div>
+
+              {/* Hand Drawn Spoon & Fresh Badge */}
+              <div className="flex md:flex-col items-center gap-4 self-end md:self-center shrink-0">
+                {/* Chalk spoon doodle */}
+                <div className="hidden sm:block text-stone-400 opacity-80 rotate-12">
+                  <svg viewBox="0 0 40 100" className="w-8 h-20 stroke-stone-300 fill-none stroke-[2]">
+                    <ellipse cx="20" cy="20" rx="14" ry="18" />
+                    <path d="M20 38v55" />
+                  </svg>
+                </div>
+
+                {/* Badge: ¡Recién hecho! */}
+                <div className="px-4 py-2 rounded-full bg-[#EAB308]/20 border-2 border-dashed border-[#F4C430] text-[#F4C430] font-['Caveat',cursive] text-xl font-bold rotate-[-4deg] shadow-md flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-[#F4C430]" />
+                  <span>¡Recién hecho!</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Smaller Hanging Chalkboard Banner */}
+          <div className="lg:col-span-4 relative bg-[#232528] border-4 border-[#4A3728] rounded-3xl p-6 shadow-xl flex flex-col justify-center text-center space-y-3 min-h-[180px]">
+            {/* Hanging Rope detail */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+              <div className="w-3 h-3 rounded-full bg-stone-400 border-2 border-stone-700" />
+            </div>
+
+            <h2 className="font-['Caveat',cursive] text-3xl md:text-4xl font-bold text-white leading-tight">
+              La hora del almuerzo
+            </h2>
+            <p className="font-['Caveat',cursive] text-lg text-stone-300">
+              Encuentra tu favorito cerca de casa. ♡
+            </p>
+          </div>
+        </section>
+
+        {/* ── 4. DISH GRID SECTION & RIGHT SIDEBAR ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* LEFT 8 COLS: ANTOJO DEL DÍA, SEARCH, FILTERS & DISH CARDS GRID */}
+          <section className="relative lg:col-span-8 space-y-6">
+
+            {/* ── ANTOJO DEL DÍA (HIGHLIGHT STRIP DE 8 COCINERAS CERCA DE TI) ── */}
+            <div className="relative bg-stone-900/90 border border-amber-600/30 rounded-3xl p-5 shadow-xl text-stone-100 space-y-4">
+              <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-[#F0822D]" />
+                  <h3 className="font-playfair text-xl font-bold text-amber-200">Antojo del Día</h3>
+                  <span className="text-xs bg-[#F0822D]/20 text-[#F0822D] border border-[#F0822D]/40 px-2.5 py-0.5 rounded-full font-bold">
+                    8 Cocineras cerca de ti
+                  </span>
+                </div>
+                <span className="text-xs text-stone-400 font-mono hidden sm:inline">Disponibles ahora mismo</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { name: "Doña Rosa", dish: "Ajiaco de la casa", dist: "350 m", rating: "4,9", img: "/images/dona_rosa_mascot.jpg" },
+                  { name: "Don Carlos", dish: "Bandeja casera", dist: "600 m", rating: "4,8", img: "/images/abuelita_3d_mascot.jpg" },
+                  { name: "Doña Marta", dish: "Pollo guisado", dist: "800 m", rating: "4,8", img: "/images/dona_rosa_mascot.jpg" },
+                  { name: "María Elena", dish: "Lentejas estofadas", dist: "1,2 km", rating: "4,7", img: "/images/abuelita_3d_mascot.jpg" },
+                  { name: "Don Luis", dish: "Sancocho de pollo", dist: "1,1 km", rating: "4,9", img: "/images/dona_rosa_mascot.jpg" },
+                  { name: "Doña Lucía", dish: "Arroz con leche", dist: "900 m", rating: "4,8", img: "/images/abuelita_3d_mascot.jpg" },
+                  { name: "Doña Carmen", dish: "Tamales tolimenses", dist: "450 m", rating: "4,9", img: "/images/dona_rosa_mascot.jpg" },
+                  { name: "Don Pedro", dish: "Sudado criollo", dist: "700 m", rating: "4,8", img: "/images/abuelita_3d_mascot.jpg" },
+                ].map((cook, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-black/60 border border-white/10 hover:border-[#F0822D]/60 p-3 rounded-2xl flex flex-col justify-between transition-all group"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <img src={cook.img} alt={cook.name} className="w-9 h-9 rounded-full object-cover border border-amber-400" />
+                        <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-500/30">
+                          ★ {cook.rating}
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-white group-hover:text-[#F0822D] transition-colors">{cook.name}</h4>
+                        <p className="text-[11px] text-stone-300 line-clamp-1">{cook.dish}</p>
+                        <span className="text-[10px] text-stone-400 font-mono block mt-0.5">A {cook.dist}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const foundDish = dishes.find((d) => d.cook === cook.name) || dishes[0];
+                        addToCart(foundDish);
+                        setOrderModalOpen(true);
+                      }}
+                      className="mt-2 w-full py-1.5 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-[11px] transition-all cursor-pointer shadow-sm"
+                    >
+                      Pedir Antojo
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── 3. SEARCH & FILTERS ROW ── */}
+            <div id="explorar" className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+              {/* Search Input */}
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Busca un plato o una cocina de tu barrio"
+                  className="w-full pl-11 pr-4 py-3 rounded-full bg-white border border-stone-300 text-stone-800 placeholder-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#C84B31] shadow-xs transition-all"
+                />
+              </div>
+
+              {/* Filter Pills */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+                {[
+                  { id: "Todos", label: "Todos", icon: Utensils },
+                  { id: "Almuerzos", label: "Almuerzos", icon: Utensils },
+                  { id: "Sopas", label: "Sopas", icon: Soup },
+                  { id: "Vegetariano", label: "Vegetariano", icon: Vegan },
+                  { id: "Postres", label: "Postres", icon: Cake },
+                  { id: "Filtros", label: "Filtros", icon: SlidersHorizontal },
+                ].map((btn) => {
+                  const Icon = btn.icon;
+                  const isActive = activeFilter === btn.id;
+                  return (
+                    <button
+                      key={btn.id}
+                      onClick={() => setActiveFilter(btn.id)}
+                      className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+                        isActive
+                          ? "bg-[#C84B31] text-white shadow-md shadow-red-950/20"
+                          : "bg-white border border-stone-200 text-stone-700 hover:bg-stone-50"
+                      }`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-[#C84B31]"}`} />
+                      <span>{btn.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── DIETARY TAGS FILTER ROW (HU-08) ── */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+              <span className="font-bold text-stone-700 shrink-0">Etiquetas Dietéticas (HU-08):</span>
+              {["Todos", "Vegetariano", "Sin Gluten", "Sin Lactosa", "Vegano"].map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => setSelectedDietaryTag(tag)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 ${
+                    selectedDietaryTag === tag
+                      ? "bg-[#62B869] text-white shadow-sm"
+                      : "bg-white border border-stone-200 text-stone-700 hover:bg-stone-100"
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+            {/* Section Heading */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-300/60 pb-3">
+              <div className="space-y-1">
+                <h2 className="font-serif text-3xl font-extrabold text-[#2C241E] flex items-center gap-2">
+                  <span>¿Qué se te antoja hoy?</span>
+                  <span className="w-12 h-1 bg-[#C84B31] rounded-full inline-block mt-2" />
+                </h2>
+              </div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#C84B31] bg-orange-100/70 border border-orange-200 px-3 py-1.5 rounded-full">
+                <MapPin className="w-3.5 h-3.5" />
+                <span>Cocinas a menos de 2 km</span>
+              </div>
+            </div>
+
+            {/* Dish Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDishes.map((dish) => (
+                <div
+                  key={dish.id}
+                  className="rounded-3xl shadow-2xl hover:shadow-3xl transition-all overflow-hidden flex flex-col justify-between h-full group bg-transparent"
+                >
+                  {/* REALISTIC THICK MAHOGANY (CAOBA) WOODEN MOULDING FRAME AROUND BLACK CHALKBOARD */}
+                  <div className="relative p-2.5 sm:p-3 rounded-t-3xl bg-gradient-to-b from-[#5C2310] via-[#3E1609] to-[#240B03] border-2 border-[#722A13] shadow-2xl ring-1 ring-[#1A0702] flex-1 flex flex-col justify-between">
+                    {/* Metallic / Copper Corner Rivet Accents */}
+                    <div className="absolute top-1.5 left-2 w-2.5 h-2.5 rounded-full bg-gradient-to-br from-amber-400 via-amber-700 to-amber-950 border border-amber-900 z-20 shadow-sm" />
+                    <div className="absolute top-1.5 right-2 w-2.5 h-2.5 rounded-full bg-gradient-to-br from-amber-400 via-amber-700 to-amber-950 border border-amber-900 z-20 shadow-sm" />
+
+                    {/* Inner Black Chalkboard Panel */}
+                    <div className="relative bg-[#1A1C1E] border-2 border-[#2B0F06] rounded-t-2xl p-3.5 sm:p-4 text-white flex-1 flex flex-col justify-between min-h-[250px] shadow-[inset_0_3px_10px_rgba(0,0,0,0.85)]">
+                      {/* Rope loops on top */}
+                      <div className="absolute top-1 left-4 w-2 h-2 rounded-full bg-stone-500 border border-stone-800" />
+                      <div className="absolute top-1 right-4 w-2 h-2 rounded-full bg-stone-500 border border-stone-800" />
+
+                      {/* Header Chalk Title & Badge */}
+                      <div className="flex items-start justify-between gap-2 z-10 pt-1 min-h-[2.8rem]">
+                        <h3 className="font-['Caveat',cursive] text-2xl font-bold leading-tight text-white group-hover:text-[#F4C430] transition-colors">
+                          {dish.name}
+                        </h3>
+
+                        {dish.badge ? (
+                          <span className="px-2.5 py-0.5 rounded-full border border-dashed border-[#F4C430] bg-[#F4C430]/10 text-[#F4C430] font-['Caveat',cursive] text-sm font-semibold shrink-0">
+                            {dish.badge}
+                          </span>
+                        ) : (
+                          <div className="h-6 shrink-0" />
+                        )}
+                      </div>
+
+                      {/* Dish Image (Aspect ratio adapted so price row is never squeezed) */}
+                      <div className="relative w-full aspect-[16/10] my-2 rounded-xl overflow-hidden shadow-inner border border-stone-700/60 shrink-0">
+                        <Image
+                          src={dish.image}
+                          alt={dish.name}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </div>
+
+                      {/* Chalk Yellow Price & Urgency Badge */}
+                      <div className="flex items-center justify-between z-10 pt-2 pb-1 shrink-0">
+                        <div>
+                          <span className="font-['Caveat',cursive] text-2xl font-bold text-[#F4C430] leading-none block">
+                            {dish.formattedPrice}
+                          </span>
+                          {/* Stock Urgency Badge HU-16 */}
+                          {dish.availablePortions === 1 && (
+                            <span className="text-[10px] font-bold text-red-400 bg-red-950/80 border border-red-500/60 px-2 py-0.5 rounded-full inline-block mt-0.5 animate-pulse flex items-center gap-1">
+                              <Flame className="w-3 h-3 text-red-400" />
+                              <span>Última porción disponible</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Report Dish Button (HU-18) */}
+                        <button
+                          onClick={() => setReportTarget({ title: dish.name, id: dish.id, type: "publicacion" })}
+                          className="text-stone-400 hover:text-red-400 text-xs font-['Caveat',cursive] flex items-center gap-1 transition-colors"
+                          title="Reportar publicación (HU-18)"
+                        >
+                          <Flag className="w-3 h-3 text-red-400" />
+                          <span>Reportar</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Light Bottom Footer Card - White strip below */}
+                  <div className="w-full bg-white p-4 flex items-center justify-between gap-3 border-x-2 border-b-2 border-stone-200 rounded-b-3xl shrink-0 z-10 text-stone-900 shadow-md">
+                    <div
+                      onClick={() => setReputationCook({ name: dish.cook, avatar: dish.cookAvatar, id: dish.cookId })}
+                      className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer group/cook hover:opacity-90 transition-opacity"
+                      title="Ver reputación y opiniones (HU-22)"
+                    >
+                      {/* Cook Avatar Circle */}
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-orange-200 shrink-0 bg-stone-100 shadow-xs relative">
+                        <img
+                          src={dish.cookAvatar}
+                          alt={dish.cook}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "/images/dona_rosa_mascot.jpg";
+                          }}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {/* Cook Name, Rating, and Distance */}
+                      <div className="min-w-0 flex flex-col justify-center">
+                        <p className="text-xs font-bold text-stone-900 truncate leading-tight group-hover/cook:text-[#F0822D]">
+                          {dish.cook} <span className="text-[10px] text-amber-600 underline">Ver Reputación</span>
+                        </p>
+                        <div className="flex items-center gap-1.5 text-[11px] text-stone-600 font-medium pt-0.5">
+                          <span className="flex items-center gap-0.5 text-amber-600 font-semibold">
+                            <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
+                            {dish.rating} ({dish.reviews})
+                          </span>
+                          <span className="text-stone-300">•</span>
+                          <span className="truncate">📍 {dish.distance}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Reserve Portion Button (HU-11, HU-14) */}
+                    <button
+                      onClick={() => setReserveModalDish(dish)}
+                      className="px-3 py-2 rounded-full bg-[#F0822D] hover:bg-[#d97224] text-white flex items-center justify-center gap-1 transition-all shadow-md active:scale-95 shrink-0 text-xs font-bold"
+                      title="Reservar porciones (HU-11)"
+                    >
+                      <Plus className="w-4 h-4 stroke-[2.5]" />
+                      <span>Reservar</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* RIGHT 4 COLS: SIDEBAR (Cocina Invitada + Tu Pedido) */}
+          <aside className="lg:col-span-4 space-y-6">
+            {/* 1. MASCOTA / COCINA INVITADA PANEL */}
+            <div className="bg-[#1C1E20] border-4 border-[#3A2D23] rounded-3xl p-6 shadow-xl relative overflow-hidden text-center space-y-4">
+              {/* Rope hanging loops */}
+              <div className="absolute top-2 left-6 w-3 h-3 rounded-full bg-stone-500 border border-stone-800" />
+              <div className="absolute top-2 right-6 w-3 h-3 rounded-full bg-stone-500 border border-stone-800" />
+
+              <span className="font-['Caveat',cursive] text-2xl font-bold text-white block">
+                Nuestra Mascota
+              </span>
+
+              {/* Official 3D Pixar Mascot Character Portrait */}
+              <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-[#F0822D] shadow-xl bg-stone-900">
+                <Image
+                  src="/images/abuelita_3d_mascot.jpg"
+                  alt="Abuela OllaCercana - Mascot"
+                  fill
+                  className="object-cover scale-110 object-center"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="font-['Caveat',cursive] text-2xl md:text-3xl font-bold text-[#F4C430] leading-tight">
+                  Abuela OllaCercana ♡
+                </h4>
+                <p className="font-['Caveat',cursive] text-stone-300 text-lg leading-snug">
+                  La calidez y sazón de nuestra comunidad.
+                </p>
+              </div>
+
+              <Link
+                href="/cocineras-cercanas"
+                className="w-full py-2.5 rounded-full bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs uppercase tracking-wider transition-all inline-flex items-center justify-center gap-2 shadow-md"
+              >
+                <span>Conócela →</span>
+              </Link>
+            </div>
+
+            {/* 2. CART SUMMARY PANEL ("TU PEDIDO") */}
+            <div
+              id="cart-section"
+              className="bg-white border-4 border-stone-300 rounded-3xl p-6 shadow-xl relative space-y-4"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+                <h3 className="font-bold text-lg text-stone-900 flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-[#C84B31]" />
+                  <span>Tu pedido</span>
+                </h3>
+                {cart.length > 0 && (
+                  <button
+                    onClick={clearCart}
+                    className="text-xs text-stone-400 hover:text-[#C84B31] transition-colors"
+                  >
+                    Vaciar
+                  </button>
+                )}
+              </div>
+
+              {/* Cart Items List */}
+              {cart.length === 0 ? (
+                <div className="py-8 text-center text-stone-400 text-xs space-y-2">
+                  <p>Tu pedido está vacío.</p>
+                  <p className="text-[11px] font-['Caveat',cursive] text-stone-500 text-base">
+                    Agrega un delicioso plato casero con el botón +
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
+                  {cart.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between gap-3 p-2 rounded-2xl bg-stone-50 border border-stone-200"
+                    >
+                      <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-stone-300">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <p className="text-xs font-bold text-stone-900 truncate">
+                          {item.name}
+                        </p>
+                        <p className="text-[10px] text-stone-500">{item.cook}</p>
+                        <p className="text-xs font-extrabold text-[#C84B31]">
+                          ${(item.price * item.quantity).toLocaleString("es-CO")}
+                        </p>
+                      </div>
+
+                      {/* Quantity Stepper & Remove */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => updateQuantity(item.id, -1)}
+                          className="w-6 h-6 rounded-full bg-stone-200 hover:bg-stone-300 text-stone-800 flex items-center justify-center font-bold text-xs"
+                        >
+                          -
+                        </button>
+                        <span className="text-xs font-bold px-1">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.id, 1)}
+                          className="w-6 h-6 rounded-full bg-stone-200 hover:bg-stone-300 text-stone-800 flex items-center justify-center font-bold text-xs"
+                        >
+                          +
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-stone-400 hover:text-red-500 ml-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Price Calculation Summary */}
+              {cart.length > 0 && (
+                <div className="space-y-2 border-t border-stone-200 pt-4 text-xs text-stone-700">
+                  <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span className="font-semibold">
+                      ${subtotal.toLocaleString("es-CO")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Entrega (A 350 m)</span>
+                    <span className="font-semibold">
+                      ${deliveryFee.toLocaleString("es-CO")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-t border-stone-200 pt-2 text-sm font-extrabold text-[#C84B31]">
+                    <span>Total</span>
+                    <span className="text-lg font-extrabold">
+                      ${total.toLocaleString("es-CO")}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* CTA Button */}
+              <button
+                disabled={cart.length === 0}
+                onClick={() => setOrderModalOpen(true)}
+                className={`w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg ${
+                  cart.length > 0
+                    ? "bg-[#C84B31] hover:bg-[#b33e26] text-white cursor-pointer"
+                    : "bg-stone-200 text-stone-400 cursor-not-allowed"
+                }`}
+              >
+                <span>¡A comer! →</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      {/* ── 5. INFINITE COOK & DISH MARQUEE SECTION ── */}
+      <section className="relative z-10 w-full py-16 overflow-hidden border-t border-emerald-900/30 bg-[#0e1610]/95 backdrop-blur-md text-white my-12 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 text-center space-y-3 mb-10">
+          <span className="text-xs font-bold uppercase tracking-widest text-[#62B869] inline-flex items-center justify-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-600/30">
+            <Sparkles className="w-3.5 h-3.5 text-[#F0822D]" />
+            <span>NUESTRAS COCINERAS Y PLATILLOS ESTRELLA</span>
+          </span>
+          <h2 className="font-serif text-3xl md:text-4xl font-extrabold text-white">
+            Comunidad de Sabor Vecinal
+          </h2>
+          <p className="text-stone-300 text-xs sm:text-sm font-light max-w-xl mx-auto">
+            Platos criollos preparados en la mañana por las vecinas de tu conjunto residencial y barrio.
+          </p>
+        </div>
+
+        {/* Marquee Row 1: Right to Left */}
+        <div className="relative w-full overflow-hidden mb-6 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+          <div className="animate-marquee-left flex gap-6">
+            {[...marqueeItemsRow1, ...marqueeItemsRow1].map((item, idx) => (
+              <div
+                key={`m1-${idx}`}
+                className="w-60 shrink-0 bg-[#17221A]/90 border border-emerald-500/20 rounded-2xl p-3 flex items-center gap-3 shadow-xl backdrop-blur-md group hover:border-[#F0822D]/60 transition-all cursor-pointer"
+              >
+                <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-stone-700">
+                  <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                </div>
+                <div className="min-w-0 text-left">
+                  <span className="text-[10px] font-semibold text-[#62B869] block uppercase tracking-wider">{item.badge}</span>
+                  <h4 className="text-xs font-bold text-white truncate">{item.title}</h4>
+                  <p className="text-[11px] text-stone-400 truncate">{item.subtitle}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Marquee Row 2: Left to Right */}
+        <div className="relative w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+          <div className="animate-marquee-right flex gap-6">
+            {[...marqueeItemsRow2, ...marqueeItemsRow2].map((item, idx) => (
+              <div
+                key={`m2-${idx}`}
+                className="w-60 shrink-0 bg-[#1A201A]/90 border border-emerald-500/20 rounded-2xl p-3 flex items-center gap-3 shadow-xl backdrop-blur-md group hover:border-[#62B869]/60 transition-all cursor-pointer"
+              >
+                <div className="relative w-14 h-14 rounded-full overflow-hidden shrink-0 border-2 border-[#F0822D]/40">
+                  <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                </div>
+                <div className="min-w-0 text-left">
+                  <span className="text-[10px] font-semibold text-[#F0822D] block uppercase tracking-wider">{item.badge}</span>
+                  <h4 className="text-xs font-bold text-white truncate">{item.title}</h4>
+                  <p className="text-[11px] text-stone-400 truncate">{item.subtitle}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 6. BENTO GRID SECTION (EXACT STRUCTURAL LAYOUT REFERENCE MATCH) ── */}
+      <section className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-12 space-y-8 text-white">
+        
+        {/* Bento Row 1: Large Top Hero Highlight Card (Studio Pley Stuodic -> Experiencia OllaCercana) */}
+        <div className="relative bg-gradient-to-r from-[#142117]/95 via-[#18281C]/95 to-[#111C14]/95 border border-emerald-500/30 rounded-3xl p-8 md:p-12 shadow-2xl overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 backdrop-blur-xl">
+          <div className="space-y-4 max-w-xl text-left z-10">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#F0822D] px-3.5 py-1 rounded-full bg-orange-950/60 border border-orange-500/30 inline-block">
+              COMIDA DE CASA • A UN PASO DE TU PUERTA
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
+              Experiencia OllaCercana: <br />
+              <span className="text-[#62B869]">Sabor Auténtico de Barrio</span>
+            </h2>
+            <p className="text-stone-300 text-xs sm:text-sm font-light leading-relaxed">
+              Conectamos el sazón tradicional de las cocineras de tu conjunto residencial con vecinos que buscan almuerzos saludables, caseros y recién hechos todos los días.
+            </p>
+            <div className="flex flex-wrap gap-4 pt-2">
+              <button
+                onClick={() => {
+                  const el = document.getElementById("explorar");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="px-6 py-3 rounded-full bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-orange-950/40 cursor-pointer"
+              >
+                Explorar Platos del Día
+              </button>
+              <Link
+                href="/cocineras-cercanas"
+                className="px-6 py-3 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-stone-200 hover:text-white font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Conocer Cocineras →
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Visual Element (Pot Graphic / Hero Dish Plate) */}
+          <div className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-3xl overflow-hidden border-2 border-emerald-500/30 shadow-2xl shrink-0 group">
+            <img src="/images/hero_plate_gourmet.jpg" alt="Pollo Dorado al Romero" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
+              <span className="text-xs font-bold text-emerald-300 font-['Caveat',cursive] text-lg">
+                Receta de la Abuela Luisa ♡
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bento Row 2: 3 Even Columns (Horere Ckonus, Nobe Fis, Umramed Piliiee) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-[#152219]/90 border border-emerald-500/20 rounded-3xl p-6 space-y-3 shadow-xl backdrop-blur-md text-left hover:border-[#F0822D]/50 transition-all">
+            <div className="w-10 h-10 rounded-2xl bg-[#F0822D]/20 border border-[#F0822D]/40 flex items-center justify-center text-[#F0822D]">
+              <Utensils className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-lg text-white">1. Explora el Libretón</h3>
+            <p className="text-xs text-stone-300 font-light leading-relaxed">
+              Consulta las ofertas diarias preparadas por las vecinas de tu sector cada mañana.
+            </p>
+            <span className="text-[11px] font-bold text-[#F0822D] uppercase tracking-wider block pt-2">
+              Ver Menú del Día →
+            </span>
+          </div>
+
+          <div className="bg-[#152219]/90 border border-emerald-500/20 rounded-3xl p-6 space-y-3 shadow-xl backdrop-blur-md text-left hover:border-[#62B869]/50 transition-all">
+            <div className="w-10 h-10 rounded-2xl bg-[#62B869]/20 border border-[#62B869]/40 flex items-center justify-center text-[#62B869]">
+              <ChefHat className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-lg text-white">2. Reserva Tu Porción</h3>
+            <p className="text-xs text-stone-300 font-light leading-relaxed">
+              Sin intermediarios ni comisiones abusivas. Paga directo por Nequi o Efectivo.
+            </p>
+            <span className="text-[11px] font-bold text-[#62B869] uppercase tracking-wider block pt-2">
+              Reserva Fácil →
+            </span>
+          </div>
+
+          <div className="bg-[#152219]/90 border border-emerald-500/20 rounded-3xl p-6 space-y-3 shadow-xl backdrop-blur-md text-left hover:border-[#F0822D]/50 transition-all">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+              <ShoppingBag className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-lg text-white">3. Entrega Vecinal</h3>
+            <p className="text-xs text-stone-300 font-light leading-relaxed">
+              Recibe tu comida caliente en la portería o puerta de tu departamento.
+            </p>
+            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block pt-2">
+              Sin Complicaciones →
+            </span>
+          </div>
+        </div>
+
+        {/* Bento Row 3: 3 Image-Heavy Showcase Cards (Oescio, Pos, Wiveest) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="relative h-64 rounded-3xl overflow-hidden border border-emerald-500/20 shadow-xl group">
+            <img src="/images/menu_ajiaco.jpg" alt="Ajiaco Santafereño" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-6 flex flex-col justify-end text-left">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#F0822D]">SOPAS TRADICIONALES</span>
+              <h4 className="font-bold text-lg text-white">Ajiaco Santafereño</h4>
+              <p className="text-xs text-stone-300 font-light">Pollo desmechado, 3 tipos de papa, guascas y alcaparras.</p>
+            </div>
+          </div>
+
+          <div className="relative h-64 rounded-3xl overflow-hidden border border-emerald-500/20 shadow-xl group">
+            <img src="/images/menu_cazuela.jpg" alt="Bandeja Criolla" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-6 flex flex-col justify-end text-left">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#62B869]">PLATOS DE MONTAÑA</span>
+              <h4 className="font-bold text-lg text-white">Bandeja Criolla</h4>
+              <p className="text-xs text-stone-300 font-light">Carne jugosa, arroz fresco, plátano maduro y aguacate.</p>
+            </div>
+          </div>
+
+          <div className="relative h-64 rounded-3xl overflow-hidden border border-emerald-500/20 shadow-xl group">
+            <img src="/images/dish_pollo_chalk.jpg" alt="Pollo Guisado" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-6 flex flex-col justify-end text-left">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">SAZÓN DE HOGAR</span>
+              <h4 className="font-bold text-lg text-white">Pollo Guisado en Salsa</h4>
+              <p className="text-xs text-stone-300 font-light">Receta criolla a fuego lento con cilantro fresco.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bento Row 4: Lower Asymmetric Block (Buns Conmeap, Saips in Sore, Moabinloes) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Block 1: Garantía & Pasos (Buns Conmeap) */}
+          <div className="lg:col-span-4 bg-[#142117]/90 border border-emerald-500/20 rounded-3xl p-6 text-left space-y-4 shadow-xl backdrop-blur-md flex flex-col justify-between">
+            <div className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#62B869]">COMPROMISO OLLACERCANA</span>
+              <h4 className="font-bold text-xl text-white">Comida Real y Saludable</h4>
+              <p className="text-xs text-stone-300 font-light leading-relaxed">
+                Cada plato es preparado en cocinas familiares que cumplen con altos estándares de higiene y sazón de hogar.
+              </p>
+            </div>
+            <div className="space-y-2 pt-2 border-t border-emerald-900/40 text-xs text-stone-200">
+              <p className="flex items-center gap-2 font-semibold">
+                <CheckCircle2 className="w-4 h-4 text-[#62B869]" />
+                <span>100% Ingredientes de la plaza local</span>
+              </p>
+              <p className="flex items-center gap-2 font-semibold">
+                <CheckCircle2 className="w-4 h-4 text-[#62B869]" />
+                <span>Sin preservantes ni caldos artificiales</span>
+              </p>
+              <p className="flex items-center gap-2 font-semibold">
+                <CheckCircle2 className="w-4 h-4 text-[#62B869]" />
+                <span>Apoyo directo a mujeres de tu vecindario</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Block 2: 4 Micro Badge Grid (Saips in Sore Seyiaing) */}
+          <div className="lg:col-span-4 bg-[#18241B]/90 border border-emerald-500/20 rounded-3xl p-6 text-left space-y-4 shadow-xl backdrop-blur-md flex flex-col justify-between">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#F0822D]">PILARES COMUNITARIOS</span>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/20 space-y-1">
+                <span className="text-lg">🥇</span>
+                <p className="text-xs font-bold text-white">Higiene</p>
+                <p className="text-[10px] text-stone-400">Revisión constante</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/20 space-y-1">
+                <span className="text-lg">🏡</span>
+                <p className="text-xs font-bold text-white">Cercanía</p>
+                <p className="text-[10px] text-stone-400">En tu mismo barrio</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/20 space-y-1">
+                <span className="text-lg">❤️</span>
+                <p className="text-xs font-bold text-white">Amor</p>
+                <p className="text-[10px] text-stone-400">Recetas de la abuela</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/20 space-y-1">
+                <span className="text-lg">🚴</span>
+                <p className="text-xs font-bold text-white">Ecológico</p>
+                <p className="text-[10px] text-stone-400">Entregas a pie</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Block 3: Historias de Hogar (Moabinloes) */}
+          <div className="lg:col-span-4 relative rounded-3xl overflow-hidden border border-emerald-500/20 shadow-xl group min-h-[220px]">
+            <img src="/images/dona_rosa_mascot.jpg" alt="Doña Rosa Mascot" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6 flex flex-col justify-end text-left space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#62B869]">TESTIMONIO DE HOGAR</span>
+              <p className="text-xs font-serif italic text-stone-200">
+                “Cocinar para mis vecinos es compartir el amor de mi familia. Cada plato lleva lo mejor de mí.”
+              </p>
+              <p className="text-xs font-bold text-[#F0822D] pt-1">— Doña Rosa, Cocinera Vecinal</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Banner Callout: Únete como Cocinera */}
+        <div className="bg-gradient-to-r from-[#1D2B20] via-[#162419] to-[#101C12] border border-emerald-500/40 rounded-3xl p-8 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6 text-left">
+          <div className="space-y-1">
+            <h3 className="font-serif text-2xl font-bold text-white">¿Eres apasionada por la cocina casera?</h3>
+            <p className="text-xs text-stone-300 font-light">
+              Únete a nuestra red de cocineras de barrio y comparte tu sazón con los vecinos de tu conjunto.
+            </p>
+          </div>
+          <Link
+            href="/cuenta"
+            className="px-6 py-3.5 rounded-full bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shrink-0"
+          >
+            Unirme como Cocinera →
+          </Link>
+        </div>
+      </section>
+
+      {/* ── CHECKOUT ORDER CONFIRMATION MODAL ── */}
+      {orderModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white border border-stone-300 rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl relative">
+            <button
+              onClick={() => setOrderModalOpen(false)}
+              className="absolute top-4 right-4 text-stone-400 hover:text-stone-800 text-lg font-bold"
+            >
+              ✕
+            </button>
+
+            <div className="text-center space-y-2">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#62B869] flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+              <h3 className="font-serif text-2xl font-bold text-stone-900">
+                ¡Tu pedido está listo!
+              </h3>
+              <p className="text-xs text-stone-500">
+                Confirmando pedido con Doña Rosa y las cocineras de tu barrio.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-2 text-xs">
+              {cart.map((item) => (
+                <div key={item.id} className="flex justify-between text-stone-700">
+                  <span>
+                    {item.quantity}x {item.name} ({item.cook})
+                  </span>
+                  <span className="font-bold">
+                    ${(item.price * item.quantity).toLocaleString("es-CO")}
+                  </span>
+                </div>
+              ))}
+              <div className="border-t border-stone-200 pt-2 flex justify-between font-extrabold text-[#C84B31] text-sm">
+                <span>Total a pagar</span>
+                <span>${total.toLocaleString("es-CO")}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <a
+                href={`https://wa.me/573000000000?text=Hola!%20Quiero%20confirmar%20mi%20pedido%20de%20OllaCercana%20por%20$${total.toLocaleString("es-CO")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  setOrderModalOpen(false);
+                  clearCart();
+                }}
+                className="w-full py-3.5 rounded-full bg-[#62B869] hover:bg-[#529d58] text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md"
+              >
+                <span>Enviar Pedido por WhatsApp</span>
+              </a>
+
+              <button
+                onClick={() => setOrderModalOpen(false)}
+                className="w-full py-2.5 text-xs text-stone-500 hover:text-stone-800"
+              >
+                Seguir pidiendo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── JIRA SPECIFICATION MODALS ── */}
+      <ReservePortionModal
+        isOpen={!!reserveModalDish}
+        onClose={() => setReserveModalDish(null)}
+        dish={reserveModalDish}
+        currentUser={currentUser}
+        onReservationCreated={(resId) => {
+          setStoredDishesList(getStoredDishes());
+          setChatReservationId(resId);
+        }}
+        onRequestPhoneVerification={() => setPhoneVerifyOpen(true)}
+      />
+
+      <ReputationModal
+        isOpen={!!reputationCook}
+        onClose={() => setReputationCook(null)}
+        cookName={reputationCook?.name || "Cocinera"}
+        cookAvatar={reputationCook?.avatar}
+        cookId={reputationCook?.id}
+      />
+
+      <ReportModal
+        isOpen={!!reportTarget}
+        onClose={() => setReportTarget(null)}
+        targetTitle={reportTarget?.title || ""}
+        targetId={reportTarget?.id || ""}
+        targetType={reportTarget?.type || "publicacion"}
+        currentUser={currentUser}
+      />
+
+      <ChatModal
+        isOpen={!!chatReservationId}
+        onClose={() => setChatReservationId(null)}
+        reservationId={chatReservationId}
+        currentUser={currentUser}
+        onOpenRatingModal={(resId, cId) => setRatingTarget({ reservationId: resId, cookId: cId })}
+      />
+
+      <PhoneVerificationModal
+        isOpen={phoneVerifyOpen}
+        onClose={() => setPhoneVerifyOpen(false)}
+        phone={currentUser.phone}
+        onVerified={() => {
+          currentUser.phoneVerified = true;
+        }}
+      />
+
+      <RatingModal
+        isOpen={!!ratingTarget}
+        onClose={() => setRatingTarget(null)}
+        reservationId={ratingTarget?.reservationId || ""}
+        cookId={ratingTarget?.cookId || ""}
+        currentUser={currentUser}
+      />
+    </div>
+  );
+}

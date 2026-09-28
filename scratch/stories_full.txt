@@ -1,0 +1,228 @@
+=== USER STORIES & FEATURES (36) ===
+
+
+**************************************************
+[OC-47] HU-23: Confirmar Entrega y Cerrar Transaccion
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+Formato:
+Como Comprador y Cocinera con reserva Confirmada
+
+**************************************************
+[OC-41] FEAT-07: Reservas
+Type: Feature | Status: Por hacer | Sprint: OC-29
+--------------------------------------------------
+Ciclo de vida completo de una reserva. El comprador aparta porciones de un plato activo y se descuentan del inventario inmediatamente (RN-03). La cocinera tiene 10 minutos para confirmar o rechazar (RN-04); si no responde
+
+**************************************************
+[OC-40] FEAT-06: Catálogo
+Type: Feature | Status: Por hacer | Sprint: OC-26
+--------------------------------------------------
+Búsqueda
+
+**************************************************
+[OC-39] FEAT-05: Oferta
+Type: Feature | Status: Por hacer | Sprint: OC-21
+--------------------------------------------------
+Publicación y gestión de platos caseros. Permite a la cocinera crear una oferta con nombre
+
+**************************************************
+[OC-38] HU-22: Consulta de Reputación e Historial de Reseñas de Cocinera
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+**************************************************
+[OC-37] HU-21: Participación en Retos Comunitarios e Insignias de Fidelidad
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador o Cocinera
+
+**************************************************
+[OC-36] HU-20: Consulta de Resumen de Historial e Ingresos Referenciales
+Type: Historia | Status: Por hacer | Sprint: OC-39
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+**************************************************
+[OC-35] HU-19: Gestión y Resolución de Reportes de la Comunidad
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Administrador
+
+**************************************************
+[OC-34] HU-18: Reportar Publicaciones o Usuarios por Incumplimiento
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Usuario
+
+**************************************************
+[OC-33] HU-17: Recepción de Avisos del Estado de la Reserva y Mensajes
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Usuario
+
+**************************************************
+[OC-32] HU-16: Sincronización en Tiempo Real de Porciones Disponibles
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+**************************************************
+[OC-31] HU-15: Calificación del Intercambio Comunitario
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador o Cocinera
+
+**************************************************
+[OC-30] HU-14: Visualización de Métodos de Pago Disponibles
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+**************************************************
+[OC-29] HU-13: Coordinación de Entrega entre Comprador y Cocinera
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador y Cocinera con reserva confirmada
+
+**************************************************
+[OC-48] HU-24: Actualizar Disponibilidad de Porciones
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+Formato:
+
+Como cocinera
+
+**************************************************
+[OC-46] FEAT-10: Documentacion API (Swagger)
+Type: Feature | Status: Por hacer | Sprint: 
+--------------------------------------------------
+Infraestructura de documentación técnica del API. No es funcionalidad de negocio: ningún actor del sistema (Cocinera
+
+**************************************************
+[OC-28] HU-12: Aceptar o Rechazar Solicitudes de Reserva
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+**************************************************
+[OC-27] HU-11: Apartar Porciones de Comida Casera
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+**************************************************
+[OC-26] HU-10: Ocultamiento de Dirección Exacta de la Cocinera
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+**************************************************
+[OC-25] HU-09: Consultar Mapa Interactivo de Cocineras
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+**************************************************
+[OC-24] HU-08: Filtrar Platos por Etiquetas Dietéticas
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador con necesidades dietéticas
+
+**************************************************
+[OC-14] FEAT-00 Gestión Proyecto
+Type: Feature | Status: Listo | Sprint: OC Sprint 1
+--------------------------------------------------
+
+
+**************************************************
+[OC-2] FEAT-01: Arquitectura & Setup
+Type: Feature | Status: Listo | Sprint: purple
+--------------------------------------------------
+Diseñar la arquitectura lógica en capas (Controller
+
+**************************************************
+[OC-3] FEAT-02: Análisis & Requerimientos
+Type: Feature | Status: Listo | Sprint: OC Sprint 1
+--------------------------------------------------
+
+
+**************************************************
+[OC-4] FEAT-03: Diseño & UX
+Type: Feature | Status: Listo | Sprint: OC Sprint 1
+--------------------------------------------------
+
+
+**************************************************
+[OC-17] HU-01: Registro de Cuenta en la Plataforma
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador o Cocinera
+
+**************************************************
+[OC-18] HU-02: Inicio de Sesión de Usuario
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Usuario registrado
+
+**************************************************
+[OC-19] HU-03: Configuración de Perfil de Cocinera y Conjunto Residencial
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+**************************************************
+[OC-20] HU-04: Publicar Oferta de Comida Casera del Día
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+**************************************************
+[OC-21] HU-05: Establecer Porciones Disponibles y Precio por Porción
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+**************************************************
+[OC-22] HU-06: Consultar Platos Disponibles por Radio de Distancia
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+**************************************************
+[OC-23] HU-07: Filtrar Platos por Tipo de Menú
+Type: Historia | Status: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+**************************************************
+[OC-43] FEAT-04: Autenticación / Perfil
+Type: Feature | Status: Por hacer | Sprint: 
+--------------------------------------------------
+Registro de nuevos usuarios
+
+**************************************************
+[OC-44] FEAT-08: Confianza y Reputación
+Type: Feature | Status: Por hacer | Sprint: 
+--------------------------------------------------
+Sistema de calificación mutua y reputación. Comprador y cocinera pueden calificarse con 1 a 5 estrellas y un comentario después de un intercambio completado. Las reseñas se publican simultáneamente al cumplirse la ventana de 72 horas para evitar represalias (RN-20). El promedio visible considera solo reseñas publicadas. Una cocinera con promedio menor a 3.5 durante al menos 5 reseñas queda Pausada hasta que moderación la reactive (RN-09). Al acumular 50 reseñas positivas obtiene la insignia Cocinera Destacada y sus platos aparecen primero en su zona (RN-10).
+
+*HUs asociadas:* HU-15 (Calificación del Intercambio)
+
+**************************************************
+[OC-45] FEAT-09: Moderación
+Type: Feature | Status: Por hacer | Sprint: 
+--------------------------------------------------
+*Estado actual:* tiene descripción. Está bien pero le falta mencionar al Administrador y las decisiones.
+*Descripción actual:* Moderación de publicaciones y cuentas: reportes de usuarios, casos de moderación, decisiones de suspensión, reactivación y ocultamiento preventivo. Agrupa las HU-18 y HU-19.
+
+*Descripción sugerida (ampliada):*
+
+{quote}Panel de moderación para el Administrador. Permite revisar la cola de reportes
+
+**************************************************
+[OC-49] FEAT-11: Interacción (Chat y Notificaciones)
+Type: Feature | Status: Por hacer | Sprint: OC-47
+--------------------------------------------------
+Comunicación entre comprador y cocinera durante el ciclo de una reserva y sistema de notificaciones. El chat se habilita solo cuando la reserva está Confirmada y pasa a solo lectura automáticamente al completarse

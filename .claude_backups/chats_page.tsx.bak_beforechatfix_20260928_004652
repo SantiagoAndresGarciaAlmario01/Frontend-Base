@@ -1,0 +1,315 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import BrandLogo from "@/components/BrandLogo";
+import AnimatedKitchenBackground from "@/components/AnimatedKitchenBackground";
+import AccountNav from "@/components/AccountNav";
+import ChatModal from "@/components/modals/ChatModal";
+import { getStoredReservations, getStoredMessages, getStoredNotifications } from "@/lib/ollacercana-store";
+import { MessageSquare, ChefHat, HelpCircle, Home } from "lucide-react";
+
+interface UserProfile {
+  name: string;
+  email: string;
+  phone: string;
+  phoneVerified?: boolean;
+  role: "comprador" | "cocinera" | "admin";
+  commercialName?: string;
+  bio?: string;
+  residentialComplex?: string;
+  paymentMethods: string[];
+  isLoggedIn: boolean;
+  avatar?: string;
+  kitchenPhoto?: string;
+  isCocineraActive?: boolean;
+  dataConsentAccepted?: boolean;
+  isPaused?: boolean;
+}
+
+interface Reservation {
+  id: string;
+  dish: string;
+  quantity: number;
+  buyerName: string;
+  buyerPhone: string;
+  paymentMethod: string;
+  price: string;
+  status: "pending" | "confirmed" | "rejected" | "closed";
+  rejectionReason?: string;
+  rejectionComment?: string;
+  expiresAt: number;
+  createdTimestamp: number;
+  cocineraConfirmedDelivery: boolean;
+  cocineraConfirmedPayment: boolean;
+  cocineraClosedAt?: number;
+  compradorClosedAt?: number;
+  isAutoClosed?: boolean;
+  rated?: boolean;
+  cookName?: string;
+  pickupTime?: string;
+}
+
+function homeForRole(role: UserProfile["role"]): string {
+  if (role === "cocinera") return "/cuenta/cocina";
+  if (role === "admin") return "/cuenta/admin";
+  return "/menu";
+}
+
+const getDefaultReservations = (): Reservation[] => [
+  {
+    id: "RES-101",
+    dish: "Guiso Tradicional en Cazuela",
+    cookName: "Doña Elena",
+    quantity: 2,
+    buyerName: "Carlos Rodríguez",
+    buyerPhone: "3104567890",
+    paymentMethod: "Nequi",
+    price: "$34.000",
+    status: "pending",
+    expiresAt: Date.now() + 10 * 60 * 1000 - 15000,
+    createdTimestamp: Date.now() - 15000,
+    cocineraConfirmedDelivery: false,
+    cocineraConfirmedPayment: false,
+  },
+  {
+    id: "RES-102",
+    dish: "Empanadas Artesanales",
+    cookName: "Doña Rosa",
+    quantity: 4,
+    buyerName: "María Fernanda Gómez",
+    buyerPhone: "3159876543",
+    paymentMethod: "Efectivo",
+    price: "$24.000",
+    status: "confirmed",
+    expiresAt: Date.now() + 600000,
+    createdTimestamp: Date.now() - 3600000,
+    cocineraConfirmedDelivery: false,
+    cocineraConfirmedPayment: false,
+  },
+];
+
+export default function ChatsPage() {
+  const router = useRouter();
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [activeChatReservationId, setActiveChatReservationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const savedUserJson = localStorage.getItem("ollacercana_user");
+    if (!savedUserJson) {
+      router.push("/cuenta");
+      return;
+    }
+    let parsed: UserProfile;
+    try {
+      parsed = JSON.parse(savedUserJson);
+      if (!parsed.isLoggedIn) {
+        router.push("/cuenta");
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+      router.push("/cuenta");
+      return;
+    }
+
+    if (parsed.role !== "comprador" && parsed.role !== "cocinera") {
+      router.push(homeForRole(parsed.role));
+      return;
+    }
+
+    setUser(parsed);
+
+    const savedResJson = localStorage.getItem("ollacercana_reservations");
+    let loadedRes: Reservation[] = [];
+    if (savedResJson) {
+      try {
+        loadedRes = JSON.parse(savedResJson);
+      } catch (e) {
+        loadedRes = getDefaultReservations();
+      }
+    } else {
+      loadedRes = getDefaultReservations();
+    }
+
+    try {
+      const storeV2 = getStoredReservations();
+      storeV2.forEach((sr) => {
+        if (!loadedRes.some((r) => r.id === sr.id)) {
+          loadedRes.unshift({
+            id: sr.id,
+            dish: sr.dishName,
+            cookName: sr.cookName || "Doña Rosa",
+            quantity: sr.portions,
+            buyerName: sr.buyerName,
+            buyerPhone: "3001234567",
+            paymentMethod: sr.preferredPaymentMethod,
+            price: `$${sr.totalPrice.toLocaleString("es-CO")}`,
+            status:
+              sr.status === "PENDIENTE"
+                ? "pending"
+                : sr.status === "CONFIRMADO"
+                ? "confirmed"
+                : sr.status === "RECHAZADA"
+                ? "rejected"
+                : "closed",
+            expiresAt: new Date(sr.expiresAt).getTime(),
+            createdTimestamp: new Date(sr.createdAt).getTime(),
+            cocineraConfirmedDelivery: !!sr.cookConfirmedDelivery,
+            cocineraConfirmedPayment: false,
+            pickupTime: sr.pickupTime,
+          });
+        }
+      });
+    } catch (e) {
+      console.error(e);
+    }
+
+    setReservations(loadedRes);
+
+    try {
+      setUnreadCount(getStoredNotifications().filter((n) => !n.read).length);
+    } catch (e) {
+      console.error(e);
+    }
+
+    setCheckingSession(false);
+  }, [router]);
+
+  if (checkingSession || !user) {
+    return (
+      <main className="relative min-h-screen w-full bg-[#14110f] flex items-center justify-center">
+        <p className="text-stone-400 text-sm font-semibold">Cargando...</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="relative min-h-screen w-full bg-[#14110f] text-[#f4efe6] font-['Outfit',sans-serif] overflow-x-hidden flex flex-col justify-between selection:bg-[#F0822D] selection:text-white">
+      <AnimatedKitchenBackground />
+
+      <header className="relative z-10 w-full pt-10 pb-6 px-6 flex flex-col items-center justify-center text-center">
+        <Link href="/" className="cursor-pointer group transition-transform hover:scale-105">
+          <BrandLogo size="lg" showTagline={true} taglineColor="text-stone-200 drop-shadow-md" />
+        </Link>
+      </header>
+
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col items-center justify-center">
+        <div className="w-full max-w-4xl bg-black/75 backdrop-blur-xl border border-white/20 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 my-6">
+          <AccountNav user={user} current="chats" unreadCount={unreadCount} />
+
+          <div className="space-y-6 text-left">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#1C1A24] border border-purple-500/30 rounded-2xl p-4 shadow-md">
+              <div>
+                <h4 className="text-sm font-bold text-purple-200 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-purple-400" />
+                  <span>Mis Conversaciones y Chats</span>
+                </h4>
+                <p className="text-xs text-stone-300">Canal directo de comunicación entre compradores y cocineras del barrio.</p>
+              </div>
+            </div>
+
+            {reservations.length === 0 ? (
+              <div className="p-10 rounded-2xl bg-black/60 border border-white/10 text-center space-y-4">
+                <div className="w-12 h-12 rounded-full bg-stone-800 flex items-center justify-center mx-auto text-stone-400">
+                  <MessageSquare className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h5 className="text-base font-bold text-white">No tienes conversaciones activas</h5>
+                  <p className="text-xs text-stone-400 max-w-sm mx-auto">
+                    Al realizar una reserva en El Libretón, se abre automáticamente la sala de chat privada.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {reservations.map((res) => {
+                  const msgs = getStoredMessages(res.id);
+                  const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
+
+                  return (
+                    <div
+                      key={res.id}
+                      className="p-4 rounded-2xl bg-black/60 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg hover:border-purple-500/40 transition-all"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#F0822D]/20 border border-[#F0822D]/40 flex items-center justify-center text-[#F0822D] font-bold shrink-0 mt-0.5">
+                          <ChefHat className="w-5 h-5" />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h5 className="text-sm font-bold text-white">{res.cookName || "Doña Elena"}</h5>
+                            <span className="text-xs text-stone-400 font-mono">({res.dish})</span>
+                          </div>
+
+                          <p className="text-xs text-stone-300 italic line-clamp-1">
+                            {lastMsg ? (
+                              <span>
+                                <strong>{lastMsg.sender}:</strong> "{lastMsg.text}"
+                              </span>
+                            ) : (
+                              <span className="text-stone-500 font-normal">Sin mensajes recientes. Haz clic para chatear.</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setActiveChatReservationId(res.id)}
+                        className="px-4 py-2.5 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0 shadow-md"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        <span>Abrir Chat</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <footer className="relative z-10 w-full px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 bg-black/40 backdrop-blur-md">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-stone-400 hover:text-white transition-colors"
+        >
+          <Home className="w-4 h-4 text-[#F0822D]" />
+          <span>Volver a OllaCercana</span>
+        </Link>
+
+        <div className="flex flex-wrap items-center justify-end gap-6 text-xs font-bold tracking-widest uppercase text-stone-300">
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              alert("Centro de Ayuda OllaCercana: Soporte para cocineras y compradores vecinales.");
+            }}
+            className="hover:text-white flex items-center gap-2 transition-colors"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-stone-400" />
+            <span>Ayuda</span>
+          </a>
+
+          <span className="text-[11px] text-stone-500 font-mono tracking-normal">v2.4</span>
+        </div>
+      </footer>
+
+      {user && (
+        <ChatModal
+          isOpen={!!activeChatReservationId}
+          onClose={() => setActiveChatReservationId(null)}
+          reservationId={activeChatReservationId}
+          currentUser={user}
+          onOpenRatingModal={() => {}}
+        />
+      )}
+    </main>
+  );
+}

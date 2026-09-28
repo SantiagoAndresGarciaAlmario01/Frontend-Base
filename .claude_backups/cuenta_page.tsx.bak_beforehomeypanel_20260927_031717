@@ -1,0 +1,2092 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
+import PublishDishModal from "@/components/modals/PublishDishModal";
+import PhoneVerificationModal from "@/components/modals/PhoneVerificationModal";
+import ChatModal from "@/components/modals/ChatModal";
+import SalesHistoryModal from "@/components/modals/SalesHistoryModal";
+import AdminModerationSection from "@/components/modals/AdminModerationSection";
+import RatingModal from "@/components/modals/RatingModal";
+import {
+  getStoredReservations,
+  getStoredMessages,
+  getStoredNotifications,
+  saveNotifications,
+  getStoredDishes,
+  saveDishes,
+  DishItem,
+  AppNotification,
+} from "@/lib/ollacercana-store";
+import {
+  Phone,
+  ChefHat,
+  ShoppingBag,
+  ShieldCheck,
+  UserCheck,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  KeyRound,
+  CreditCard,
+  Building,
+  Star,
+  RefreshCw,
+  X,
+  Check,
+  UserPlus,
+  HelpCircle,
+  RotateCcw,
+  LogOut,
+  Home,
+  MessageSquare,
+  BarChart3,
+  PlusCircle,
+  Bell,
+  Upload,
+  FileCheck,
+  TrendingUp,
+  Plus,
+  Minus,
+  Ban,
+} from "lucide-react";
+
+interface UserProfile {
+  name: string;
+  email: string;
+  phone: string;
+  phoneVerified?: boolean;
+  role: "comprador" | "cocinera" | "admin";
+  commercialName?: string;
+  bio?: string;
+  residentialComplex?: string;
+  paymentMethods: string[];
+  isLoggedIn: boolean;
+  avatar?: string;
+  kitchenPhoto?: string;
+  isCocineraActive?: boolean;
+  dataConsentAccepted?: boolean;
+  isPaused?: boolean;
+}
+
+interface Reservation {
+  id: string;
+  dish: string;
+  quantity: number;
+  buyerName: string;
+  buyerPhone: string;
+  paymentMethod: string;
+  price: string;
+  status: "pending" | "confirmed" | "rejected" | "closed";
+  rejectionReason?: string;
+  rejectionComment?: string;
+  expiresAt: number; // timestamp
+  createdTimestamp: number;
+  cocineraConfirmedDelivery: boolean;
+  cocineraConfirmedPayment: boolean;
+  cocineraClosedAt?: number;
+  compradorClosedAt?: number;
+  isAutoClosed?: boolean;
+  rated?: boolean;
+  cookName?: string;
+  pickupTime?: string;
+}
+
+export default function CuentaPage() {
+  // ── CANVAS FRAME-SEQUENCE ANIMATION STATE ──
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const frameIndexRef = useRef(0);
+
+  // Mode: Auth or Profile
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [activeRoleTab, setActiveRoleTab] = useState<"cocinero" | "comprador" | "chats" | "notificaciones" | "admin">("comprador");
+  const [compradorSubTab, setCompradorSubTab] = useState<"activas" | "historial">("activas");
+
+  // User Session State
+  const [user, setUser] = useState<UserProfile | null>(null);
+  
+  // Login Form State
+  const [loginId, setLoginId] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [rememberSession, setRememberSession] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
+  // Forgot Password Modal State
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [forgotId, setForgotId] = useState("");
+  const [forgotSuccess, setForgotSuccess] = useState("");
+  const [forgotError, setForgotError] = useState("");
+
+  // Register Form State
+  const [regName, setRegName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regConfirmPassword, setRegConfirmPassword] = useState("");
+  const [regRole, setRegRole] = useState<"comprador" | "cocinera">("comprador");
+  const [regKitchenPhoto, setRegKitchenPhoto] = useState("");
+  const [regTerms, setRegTerms] = useState(false);
+  const [regErrors, setRegErrors] = useState<Record<string, string>>({});
+
+  // Profile Form State
+  const [commercialName, setCommercialName] = useState("");
+  const [bio, setBio] = useState("");
+  const [residentialComplex, setResidentialComplex] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>(["Efectivo", "Nequi"]);
+  const [profileSuccess, setProfileSuccess] = useState(false);
+
+  // OTP Verification Modal State
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
+  const [otpTimer, setOtpTimer] = useState(300); // 5 minutes
+  const [otpError, setOtpError] = useState("");
+
+  // Notifications State
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+
+  // Cook Requests, Dishes & Reservations State
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [dishesList, setDishesList] = useState<DishItem[]>([]);
+  const [dishAvailabilityError, setDishAvailabilityError] = useState<string | null>(null);
+  const [rejectingResId, setRejectingResId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("Sin porciones disponibles");
+  const [rejectComment, setRejectComment] = useState("");
+  const [rejectError, setRejectError] = useState("");
+
+  // Rating Modal State
+  const [ratingResId, setRatingResId] = useState<string | null>(null);
+  const [ratingStars, setRatingStars] = useState(5);
+
+  // Jira Spec Modals State
+  const [isPublishDishModalOpen, setIsPublishDishModalOpen] = useState(false);
+  const [isSalesHistoryModalOpen, setIsSalesHistoryModalOpen] = useState(false);
+  const [activeChatReservationId, setActiveChatReservationId] = useState<string | null>(null);
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+
+  // ── 150-FRAME BACKGROUND ANIMATION LOOP ──
+  useEffect(() => {
+    const totalFrames = 150;
+    const images: HTMLImageElement[] = [];
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const pad = (n: number) => String(n).padStart(3, "0");
+
+    // Load Frame 1 immediately
+    const frame1 = new Image();
+    frame1.src = `/frames-login/frame_001.png`;
+    images[0] = frame1;
+
+    frame1.onload = () => {
+      drawCanvasFrame(frame1);
+    };
+
+    // Preload remaining frames 2..150
+    for (let i = 1; i < totalFrames; i++) {
+      const img = new Image();
+      img.src = `/frames-login/frame_${pad(i + 1)}.png`;
+      images[i] = img;
+    }
+    imagesRef.current = images;
+
+    const drawCanvasFrame = (img: HTMLImageElement) => {
+      if (!canvasRef.current || !img || !img.complete || img.naturalWidth === 0) return;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      const displayWidth = window.innerWidth;
+      const displayHeight = window.innerHeight;
+
+      if (canvas.width !== displayWidth * dpr || canvas.height !== displayHeight * dpr) {
+        canvas.width = displayWidth * dpr;
+        canvas.height = displayHeight * dpr;
+      }
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+      // Aspect Ratio Cover Math
+      const imgWidth = img.naturalWidth || img.width || 1920;
+      const imgHeight = img.naturalHeight || img.height || 1080;
+      const imgRatio = imgWidth / imgHeight;
+      const screenRatio = displayWidth / displayHeight;
+
+      let drawW = displayWidth;
+      let drawH = displayHeight;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (screenRatio > imgRatio) {
+        drawH = displayWidth / imgRatio;
+        offsetY = (displayHeight - drawH) / 2;
+      } else {
+        drawW = displayHeight * imgRatio;
+        offsetX = (displayWidth - drawW) / 2;
+      }
+
+      ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+      ctx.restore();
+    };
+
+    let animationFrameId: number;
+    let lastTime = performance.now();
+    const fps = 25; // ~25 FPS animation rate
+    const frameInterval = 1000 / fps;
+
+    const renderLoop = (now: number) => {
+      if (!prefersReducedMotion) {
+        const elapsed = now - lastTime;
+        if (elapsed >= frameInterval) {
+          lastTime = now - (elapsed % frameInterval);
+
+          frameIndexRef.current = (frameIndexRef.current + 1) % totalFrames;
+          const currentImg = imagesRef.current[frameIndexRef.current];
+
+          if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
+            drawCanvasFrame(currentImg);
+          } else {
+            // Fallback to frame 1 if not fully loaded yet
+            const firstImg = imagesRef.current[0];
+            if (firstImg && firstImg.complete) drawCanvasFrame(firstImg);
+          }
+        }
+        animationFrameId = requestAnimationFrame(renderLoop);
+      } else {
+        // Reduced motion: static frame 1
+        const firstImg = imagesRef.current[0];
+        if (firstImg && firstImg.complete) drawCanvasFrame(firstImg);
+      }
+    };
+
+    if (!prefersReducedMotion) {
+      animationFrameId = requestAnimationFrame(renderLoop);
+    }
+
+    const handleResize = () => {
+      const curImg = imagesRef.current[frameIndexRef.current] || imagesRef.current[0];
+      if (curImg && curImg.complete) drawCanvasFrame(curImg);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  // Load Session & Remembered Identifier on Mount
+  useEffect(() => {
+    const remembered = localStorage.getItem("ollacercana_remembered_id");
+    if (remembered) {
+      setLoginId(remembered);
+      setRememberSession(true);
+    }
+
+    const savedUserJson = localStorage.getItem("ollacercana_user");
+    if (savedUserJson) {
+      try {
+        const parsed: UserProfile = JSON.parse(savedUserJson);
+        if (parsed.isLoggedIn) {
+          setUser(parsed);
+          setCommercialName(parsed.commercialName || "Cocina de Doña Elena");
+          setBio(parsed.bio || "Especialidad en guisos tradicionales a fuego lento y repostería artesanal.");
+          setResidentialComplex(parsed.residentialComplex || "Torres del Norte - Apto 302");
+          setEditPhone(parsed.phone);
+          setSelectedPaymentMethods(parsed.paymentMethods || ["Efectivo", "Nequi"]);
+          if (parsed.role === "cocinera") setActiveRoleTab("cocinero");
+          else if (parsed.role === "comprador") setActiveRoleTab("comprador");
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const savedResJson = localStorage.getItem("ollacercana_reservations");
+    let loadedRes: Reservation[] = [];
+    if (savedResJson) {
+      try {
+        loadedRes = JSON.parse(savedResJson);
+      } catch (e) {
+        loadedRes = getDefaultReservations();
+      }
+    } else {
+      loadedRes = getDefaultReservations();
+    }
+
+    // Merge reservations from central store (v2) created by ReservePortionModal
+    try {
+      const storeV2 = getStoredReservations();
+      storeV2.forEach((sr) => {
+        if (!loadedRes.some((r) => r.id === sr.id)) {
+          loadedRes.unshift({
+            id: sr.id,
+            dish: sr.dishName,
+            cookName: sr.cookName || "Doña Rosa",
+            quantity: sr.portions,
+            buyerName: sr.buyerName,
+            buyerPhone: "3001234567",
+            paymentMethod: sr.preferredPaymentMethod,
+            price: `$${sr.totalPrice.toLocaleString("es-CO")}`,
+            status:
+              sr.status === "PENDIENTE"
+                ? "pending"
+                : sr.status === "CONFIRMADO"
+                ? "confirmed"
+                : sr.status === "RECHAZADA"
+                ? "rejected"
+                : "closed",
+            expiresAt: new Date(sr.expiresAt).getTime(),
+            createdTimestamp: new Date(sr.createdAt).getTime(),
+            cocineraConfirmedDelivery: !!sr.cookConfirmedDelivery,
+            cocineraConfirmedPayment: false,
+            pickupTime: sr.pickupTime,
+          });
+        }
+      });
+    } catch (e) {
+      console.error(e);
+    }
+
+    setReservations(loadedRes);
+  }, []);
+
+  const getDefaultReservations = (): Reservation[] => [
+    {
+      id: "RES-101",
+      dish: "Guiso Tradicional en Cazuela",
+      cookName: "Doña Elena",
+      quantity: 2,
+      buyerName: "Carlos Rodríguez",
+      buyerPhone: "3104567890",
+      paymentMethod: "Nequi",
+      price: "$34.000",
+      status: "pending",
+      expiresAt: Date.now() + 10 * 60 * 1000 - 15000,
+      createdTimestamp: Date.now() - 15000,
+      cocineraConfirmedDelivery: false,
+      cocineraConfirmedPayment: false,
+    },
+    {
+      id: "RES-102",
+      dish: "Empanadas Artesanales",
+      cookName: "Doña Rosa",
+      quantity: 4,
+      buyerName: "María Fernanda Gómez",
+      buyerPhone: "3159876543",
+      paymentMethod: "Efectivo",
+      price: "$24.000",
+      status: "confirmed",
+      expiresAt: Date.now() + 600000,
+      createdTimestamp: Date.now() - 3600000,
+      cocineraConfirmedDelivery: false,
+      cocineraConfirmedPayment: false,
+    },
+  ];
+
+  // Timer Ticks
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setOtpTimer((prev) => (prev > 0 ? prev - 1 : 0));
+
+      setReservations((prev) => {
+        let changed = false;
+        const updated = prev.map((res) => {
+          if (res.status === "confirmed" && (res.cocineraConfirmedDelivery || res.compradorClosedAt)) {
+            const ageHours = (Date.now() - res.createdTimestamp) / (1000 * 3600);
+            if (ageHours >= 24 && !res.isAutoClosed) {
+              changed = true;
+              return { ...res, status: "closed" as const, isAutoClosed: true };
+            }
+          }
+          return res;
+        });
+        if (changed) {
+          localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+        }
+        return updated;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Login Submit Handler (Fulfilling HU-02 Acceptance Criteria)
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+
+    if (!loginId.trim() || !loginPassword.trim()) {
+      setLoginError("Ingresa tu identificador y contraseña.");
+      return;
+    }
+
+    // Escenario 3 (HU-02): Usuario inexistente
+    if (
+      loginId.toLowerCase().includes("inexistente") ||
+      loginId === "3000000000" ||
+      loginId.toLowerCase() === "noexiste@correo.com"
+    ) {
+      setLoginError("El usuario no existe. Te sugerimos registrarte en la pestaña superior.");
+      return;
+    }
+
+    // Escenario 2 (HU-02): Credenciales inválidas
+    if (loginPassword === "erronea" || loginPassword === "123") {
+      setLoginError("Credenciales inválidas");
+      return;
+    }
+
+    // Escenario 1 (HU-02): Camino feliz
+    if (rememberSession) {
+      localStorage.setItem("ollacercana_remembered_id", loginId);
+    } else {
+      localStorage.removeItem("ollacercana_remembered_id");
+    }
+
+    const isCocineraRole = loginId.toLowerCase().includes("cocinera") || activeRoleTab === "cocinero";
+    const isAdminRole = loginId.toLowerCase().includes("admin");
+
+    const newUser: UserProfile = {
+      name: loginId.includes("@") ? loginId.split("@")[0] : "Cocinera Elena",
+      email: loginId.includes("@") ? loginId : "elena@ollacercana.com",
+      phone: "3001234567",
+      phoneVerified: true,
+      role: isAdminRole ? "admin" : isCocineraRole ? "cocinera" : "comprador",
+      commercialName: "Cocina de Doña Elena",
+      bio: "Especialidad en guisos tradicionales a fuego lento y repostería artesanal.",
+      residentialComplex: "Torres del Norte - Apto 302",
+      paymentMethods: ["Efectivo", "Nequi", "Daviplata"],
+      isLoggedIn: true,
+      isCocineraActive: true,
+      dataConsentAccepted: true,
+    };
+
+    setUser(newUser);
+    setCommercialName(newUser.commercialName!);
+    setBio(newUser.bio!);
+    setResidentialComplex(newUser.residentialComplex!);
+    setEditPhone(newUser.phone);
+    localStorage.setItem("ollacercana_user", JSON.stringify(newUser));
+  };
+
+  // Register Submit Handler
+  const handleRegisterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const errors: Record<string, string> = {};
+
+    if (!regName.trim()) {
+      errors.name = "El nombre es obligatorio.";
+    }
+
+    if (!regEmail.trim() || !/\S+@\S+\.\S+/.test(regEmail)) {
+      errors.email = "Correo electrónico inválido (ej: usuario@correo.com).";
+    }
+
+    if (!/^3\d{9}$/.test(regPhone)) {
+      errors.phone = "El celular debe contener exactamente 10 dígitos y comenzar por 3.";
+    }
+
+    const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+    if (!pwdRegex.test(regPassword)) {
+      errors.password = "La contraseña debe incluir al menos una mayúscula, una minúscula y un número.";
+    }
+
+    if (regPassword !== regConfirmPassword) {
+      errors.confirmPassword = "Las contraseñas no coinciden.";
+    }
+
+    if (!regTerms) {
+      errors.terms = "Debes aceptar los términos y condiciones.";
+    }
+
+    if (regEmail.toLowerCase() === "duplicado@correo.com") {
+      errors.email = "El correo ya se encuentra registrado (409 Conflict).";
+    }
+    if (regPhone === "3000000000") {
+      errors.phone = "El número celular ya está registrado (409 Conflict).";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setRegErrors(errors);
+      return;
+    }
+
+    setRegErrors({});
+    const newUser: UserProfile = {
+      name: regName,
+      email: regEmail,
+      phone: regPhone,
+      role: regRole,
+      commercialName: regRole === "cocinera" ? `Cocina de ${regName}` : undefined,
+      bio: "Cocinera de barrio apasionada por la comida real.",
+      residentialComplex: "Conjunto Residencial El Rosal",
+      paymentMethods: ["Efectivo", "Nequi"],
+      isLoggedIn: true,
+    };
+
+    setUser(newUser);
+    setCommercialName(newUser.commercialName || "");
+    setBio(newUser.bio || "");
+    setResidentialComplex(newUser.residentialComplex || "");
+    setEditPhone(newUser.phone);
+    localStorage.setItem("ollacercana_user", JSON.stringify(newUser));
+  };
+
+  // Profile Save Handler
+  const handleProfileSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    if (editPhone !== user.phone && /^3\d{9}$/.test(editPhone)) {
+      setShowOtpModal(true);
+      setOtpTimer(300);
+      setOtpDigits(["", "", "", "", "", ""]);
+      setOtpError("");
+      return;
+    }
+
+    const updated: UserProfile = {
+      ...user,
+      commercialName,
+      bio,
+      residentialComplex,
+      phone: editPhone,
+      paymentMethods: selectedPaymentMethods,
+    };
+    setUser(updated);
+    localStorage.setItem("ollacercana_user", JSON.stringify(updated));
+    setProfileSuccess(true);
+    setTimeout(() => setProfileSuccess(false), 3000);
+  };
+
+  // OTP Verification Submit
+  const handleVerifyOtp = () => {
+    const code = otpDigits.join("");
+    if (code.length !== 6) {
+      setOtpError("Ingresa el código completo de 6 dígitos.");
+      return;
+    }
+
+    if (code === "000000") {
+      setOtpError("Código incorrecto o expirado.");
+      return;
+    }
+
+    if (!user) return;
+
+    const updated: UserProfile = {
+      ...user,
+      phone: editPhone,
+      commercialName,
+      bio,
+      residentialComplex,
+      paymentMethods: selectedPaymentMethods,
+    };
+    setUser(updated);
+    localStorage.setItem("ollacercana_user", JSON.stringify(updated));
+    setShowOtpModal(false);
+    setProfileSuccess(true);
+    setTimeout(() => setProfileSuccess(false), 3000);
+  };
+
+  // Logout Handler
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("ollacercana_user");
+  };
+
+  // Cook Request Decision Handler
+  const handleConfirmReservation = (resId: string) => {
+    const updated = reservations.map((r) =>
+      r.id === resId ? { ...r, status: "confirmed" as const } : r
+    );
+    setReservations(updated);
+    localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+  };
+
+  const handleOpenRejectModal = (resId: string) => {
+    setRejectingResId(resId);
+    setRejectReason("Sin porciones disponibles");
+    setRejectComment("");
+    setRejectError("");
+  };
+
+  const handleSubmitReject = () => {
+    if (!rejectingResId) return;
+
+    if (rejectReason === "Otro" && !rejectComment.trim()) {
+      setRejectError("Escribe una breve observación cuando selecciones 'Otro'.");
+      return;
+    }
+
+    const updated = reservations.map((r) =>
+      r.id === rejectingResId
+        ? {
+            ...r,
+            status: "rejected" as const,
+            rejectionReason: rejectReason,
+            rejectionComment: rejectComment,
+          }
+        : r
+    );
+
+    setReservations(updated);
+    localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+    setRejectingResId(null);
+  };
+
+  // Delivery Closing Flow Handlers (HU-23)
+  const handleToggleCocineraCheck = (resId: string, type: "delivery" | "payment") => {
+    const updated = reservations.map((r) => {
+      if (r.id === resId) {
+        return {
+          ...r,
+          cocineraConfirmedDelivery: type === "delivery" ? !r.cocineraConfirmedDelivery : r.cocineraConfirmedDelivery,
+          cocineraConfirmedPayment: type === "payment" ? !r.cocineraConfirmedPayment : r.cocineraConfirmedPayment,
+        };
+      }
+      return r;
+    });
+    setReservations(updated);
+    localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+  };
+
+  const handleConfirmClosing = (resId: string) => {
+    const updated = reservations.map((r) => {
+      if (r.id === resId) {
+        const cocineraTimestamp = Date.now();
+        const fullyClosed = !!r.compradorClosedAt;
+        return {
+          ...r,
+          cocineraClosedAt: cocineraTimestamp,
+          status: fullyClosed ? ("closed" as const) : ("confirmed" as const),
+        };
+      }
+      return r;
+    });
+    setReservations(updated);
+    localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+  };
+
+  const handleSimulateCompradorConfirm = (resId: string) => {
+    const updated = reservations.map((r) => {
+      if (r.id === resId) {
+        const compradorTimestamp = Date.now();
+        const fullyClosed = !!r.cocineraClosedAt;
+        return {
+          ...r,
+          compradorClosedAt: compradorTimestamp,
+          status: fullyClosed ? ("closed" as const) : ("confirmed" as const),
+        };
+      }
+      return r;
+    });
+    setReservations(updated);
+    localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+  };
+
+  const handleRatingSubmit = () => {
+    if (!ratingResId) return;
+    const updated = reservations.map((r) =>
+      r.id === ratingResId ? { ...r, rated: true } : r
+    );
+    setReservations(updated);
+    localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+    setRatingResId(null);
+  };
+
+  const formatTimer = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
+
+  const getRemainingTime = (expiresAt: number) => {
+    const diff = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+    const m = Math.floor(diff / 60);
+    const s = diff % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
+
+  return (
+    <main className="relative min-h-screen w-full bg-[#14110f] text-[#f4efe6] font-['Outfit',sans-serif] overflow-x-hidden flex flex-col justify-between selection:bg-[#F0822D] selection:text-white">
+      
+      {/* ── 150-FRAME ANIMATED CANVAS BACKGROUND (CONTINUOUS LOOP AT ~25FPS) ── */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none filter brightness-125"
+        />
+
+        {/* Lighter Overlay Gradients so Video Stays Visible */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#14110f]/60 via-[#14110f]/25 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-radial from-transparent via-[#14110f]/20 to-[#14110f]/40 pointer-events-none" />
+
+        {/* Subtle Orange & Green Brand Ambient Glow Accents */}
+        <div className="absolute top-1/4 -left-20 w-96 h-96 rounded-full bg-[#F0822D]/15 blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-10 right-0 w-[30rem] h-[30rem] rounded-full bg-[#62B869]/15 blur-[140px] pointer-events-none" />
+      </div>
+
+      {/* ── TOP HEADER / BRAND TITLE (UPPER CENTER) ── */}
+      <header className="relative z-10 w-full pt-10 pb-6 px-6 flex flex-col items-center justify-center text-center">
+        <Link href="/" className="cursor-pointer group transition-transform hover:scale-105">
+          <BrandLogo size="lg" showTagline={true} taglineColor="text-stone-200 drop-shadow-md" />
+        </Link>
+      </header>
+
+      {/* ── MAIN CONTENT CONTAINER (CENTERED FORM PANEL) ── */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col items-center justify-center">
+        
+        {/* IF NOT LOGGED IN: COMPACT TRANSPARENT GLASS LOGIN FORM PANEL (CENTERED) */}
+        {!user ? (
+          <div className="w-full max-w-md mx-auto bg-black/25 backdrop-blur-xl border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black/90 space-y-6">
+            
+            {/* Login / Register Toggle Header */}
+            <div className="flex items-center justify-around border-b border-white/10 pb-3">
+              <button
+                onClick={() => setAuthMode("login")}
+                className={`text-sm font-bold uppercase tracking-wider pb-1.5 border-b-2 transition-all cursor-pointer ${
+                  authMode === "login"
+                    ? "border-[#F0822D] text-[#F0822D]"
+                    : "border-transparent text-stone-400 hover:text-stone-200"
+                }`}
+              >
+                Iniciar Sesión
+              </button>
+              <button
+                onClick={() => setAuthMode("register")}
+                className={`text-sm font-bold uppercase tracking-wider pb-1.5 border-b-2 transition-all cursor-pointer ${
+                  authMode === "register"
+                    ? "border-[#F0822D] text-[#F0822D]"
+                    : "border-transparent text-stone-400 hover:text-stone-200"
+                }`}
+              >
+                Registrarme
+              </button>
+            </div>
+
+            {/* LOGIN FORM */}
+            {authMode === "login" && (
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
+                {loginError && (
+                  <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2 backdrop-blur-md">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                    <span>{loginError}</span>
+                  </div>
+                )}
+
+                <div className="space-y-1.5 text-left">
+                  <label className="text-xs uppercase font-bold tracking-wider text-stone-300">
+                    Identificador (Correo o Celular)
+                  </label>
+                  <input
+                    type="text"
+                    value={loginId}
+                    onChange={(e) => setLoginId(e.target.value)}
+                    placeholder="ej: usuario@ollacercana.com"
+                    className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-sm text-white placeholder-stone-500 focus:border-[#F0822D] focus:ring-1 focus:ring-[#F0822D] outline-none transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1.5 text-left">
+                  <label className="text-xs uppercase font-bold tracking-wider text-stone-300">
+                    Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-sm text-white placeholder-stone-500 focus:border-[#F0822D] focus:ring-1 focus:ring-[#F0822D] outline-none transition-all"
+                  />
+                  <div className="text-right pt-0.5">
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        alert("Enlace de recuperación enviado a tu identificador.");
+                      }}
+                      className="text-xs text-[#F0822D] hover:underline"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 text-xs text-stone-300">
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rememberSession}
+                      onChange={(e) => setRememberSession(e.target.checked)}
+                      className="w-4 h-4 accent-[#F0822D] rounded border-white/30"
+                    />
+                    <span>Recordar sesión</span>
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full mt-3 py-3.5 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-orange-950/50 active:scale-[0.98]"
+                >
+                  Iniciar Sesión
+                </button>
+              </form>
+            )}
+
+            {/* REGISTER FORM */}
+            {authMode === "register" && (
+              <form onSubmit={handleRegisterSubmit} className="space-y-3.5 text-left">
+                <div>
+                  <label className="text-[11px] uppercase font-bold tracking-wider text-stone-300 block mb-1">Nombre Completo</label>
+                  <input
+                    type="text"
+                    value={regName}
+                    onChange={(e) => setRegName(e.target.value)}
+                    placeholder="ej: Elena Ramírez"
+                    className="w-full bg-black/50 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-stone-500 focus:border-[#F0822D] outline-none"
+                  />
+                  {regErrors.name && <span className="text-[11px] text-rose-400">{regErrors.name}</span>}
+                </div>
+
+                <div>
+                  <label className="text-[11px] uppercase font-bold tracking-wider text-stone-300 block mb-1">Correo Electrónico</label>
+                  <input
+                    type="email"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    placeholder="ej: elena@correo.com"
+                    className="w-full bg-black/50 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-stone-500 focus:border-[#F0822D] outline-none"
+                  />
+                  {regErrors.email && <span className="text-[11px] text-rose-400 font-mono">{regErrors.email}</span>}
+                </div>
+
+                <div>
+                  <label className="text-[11px] uppercase font-bold tracking-wider text-stone-300 block mb-1">Celular (10 dígitos)</label>
+                  <input
+                    type="text"
+                    value={regPhone}
+                    onChange={(e) => setRegPhone(e.target.value)}
+                    placeholder="ej: 3001234567"
+                    maxLength={10}
+                    className="w-full bg-black/50 border border-white/20 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-stone-500 focus:border-[#F0822D] outline-none"
+                  />
+                  {regErrors.phone && <span className="text-[11px] text-rose-400 font-mono">{regErrors.phone}</span>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold tracking-wider text-stone-300 block mb-1">Contraseña</label>
+                    <input
+                      type="password"
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-xs text-white focus:border-[#F0822D] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] uppercase font-bold tracking-wider text-stone-300 block mb-1">Confirmar</label>
+                    <input
+                      type="password"
+                      value={regConfirmPassword}
+                      onChange={(e) => setRegConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-black/50 border border-white/20 rounded-xl px-3 py-2 text-xs text-white focus:border-[#F0822D] outline-none"
+                    />
+                  </div>
+                </div>
+                {regErrors.password && <span className="text-[11px] text-rose-400 font-mono block">{regErrors.password}</span>}
+                {regErrors.confirmPassword && <span className="text-[11px] text-rose-400 block">{regErrors.confirmPassword}</span>}
+
+                <div>
+                  <label className="text-[10px] uppercase font-bold tracking-wider text-stone-300 block mb-1">Rol en OllaCercana</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRegRole("comprador")}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                        regRole === "comprador"
+                          ? "bg-[#62B869]/20 border-[#62B869] text-[#62B869]"
+                          : "bg-black/40 border-white/20 text-stone-400"
+                      }`}
+                    >
+                      Comprador
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRegRole("cocinera")}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                        regRole === "cocinera"
+                          ? "bg-[#F0822D]/20 border-[#F0822D] text-[#F0822D]"
+                          : "bg-black/40 border-white/20 text-stone-400"
+                      }`}
+                    >
+                      Cocinera
+                    </button>
+                  </div>
+                </div>
+
+                {regRole === "cocinera" && (
+                  <div>
+                    <label className="text-[10px] uppercase font-bold tracking-wider text-amber-300 block mb-1 flex items-center gap-1">
+                      <Upload className="w-3 h-3 text-[#F0822D]" /> Foto de Perfil / Cocina
+                    </label>
+                    <label className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-dashed border-white/30 bg-black/40 text-stone-300 text-xs font-semibold cursor-pointer hover:border-[#F0822D] transition-all">
+                      <span>{regKitchenPhoto ? "Foto de cocina adjuntada ✓" : "Adjuntar foto de perfil o cocina"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (evt) => {
+                              if (evt.target?.result) {
+                                setRegKitchenPhoto(evt.target.result as string);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                )}
+
+                <div className="pt-1">
+                  <label className="flex items-center gap-2 text-xs text-stone-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={regTerms}
+                      onChange={(e) => setRegTerms(e.target.checked)}
+                      className="accent-[#F0822D] rounded"
+                    />
+                    <span>Acepto Términos y Condiciones</span>
+                  </label>
+                  {regErrors.terms && <span className="text-[11px] text-rose-400 block">{regErrors.terms}</span>}
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full mt-2 py-3 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs uppercase tracking-widest transition-all cursor-pointer shadow-lg"
+                >
+                  Crear Mi Cuenta
+                </button>
+              </form>
+            )}
+
+          </div>
+        ) : (
+          /* IF LOGGED IN: DASHBOARD PANEL & PROFILE */
+          <div className="w-full max-w-4xl bg-black/75 backdrop-blur-xl border border-white/20 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 my-6">
+            
+            <div className="p-4 rounded-2xl bg-black/60 border border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F0822D]/20 border border-[#F0822D]/40 flex items-center justify-center text-[#F0822D] font-bold">
+                  {user.name.charAt(0)}
+                </div>
+                <div className="text-left">
+                  <h3 className="text-sm font-bold text-white">{user.name}</h3>
+                  <p className="text-xs text-stone-400 font-mono">{user.email} • {user.role.toUpperCase()}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 border border-white/10 text-stone-300 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Cerrar Sesión</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-1.5 rounded-2xl bg-black/60 border border-white/10">
+              <button
+                onClick={() => setActiveRoleTab("comprador")}
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  activeRoleTab === "comprador"
+                    ? "bg-[#62B869] text-white shadow-md"
+                    : "text-stone-400 hover:text-white"
+                }`}
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Mis Pedidos</span>
+              </button>
+
+              <button
+                onClick={() => setActiveRoleTab("chats")}
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  activeRoleTab === "chats"
+                    ? "bg-[#F0822D] text-white shadow-md"
+                    : "text-stone-400 hover:text-white"
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Mis Chats</span>
+              </button>
+
+              <button
+                onClick={() => setActiveRoleTab("cocinero")}
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  activeRoleTab === "cocinero"
+                    ? "bg-amber-600 text-white shadow-md"
+                    : "text-stone-400 hover:text-white"
+                }`}
+              >
+                <ChefHat className="w-4 h-4" />
+                <span>Modo Cocinera</span>
+              </button>
+
+              <button
+                onClick={() => setActiveRoleTab("notificaciones")}
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer relative ${
+                  activeRoleTab === "notificaciones"
+                    ? "bg-sky-600 text-white shadow-md"
+                    : "text-stone-400 hover:text-white"
+                }`}
+              >
+                <Bell className="w-4 h-4" />
+                <span>Avisos</span>
+                {notifications.filter((n) => !n.read).length > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                )}
+              </button>
+
+              <button
+                onClick={() => setActiveRoleTab("admin")}
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  activeRoleTab === "admin"
+                    ? "bg-purple-600 text-white shadow-md"
+                    : "text-stone-400 hover:text-white"
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Admin</span>
+              </button>
+            </div>
+
+            {/* ── 1. COMPRADOR: MIS RESERVAS (ACTIVAS VS HISTORIAL + VOLVER A PEDIR) ── */}
+            {activeRoleTab === "comprador" && (
+              <div className="space-y-6 text-left">
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-[#131F18] border border-emerald-600/30 rounded-2xl p-4 shadow-md">
+                  <div>
+                    <h4 className="text-sm font-bold text-emerald-300 flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4 text-emerald-400" />
+                      <span>Mis Reservas y Pedidos Realizados</span>
+                    </h4>
+                    <p className="text-xs text-stone-300">
+                      Gestiona tus reservas activas en tiempo real o revisa tu historial para volver a pedir tus platos favoritos.
+                    </p>
+                  </div>
+                  <Link
+                    href="/menu"
+                    className="px-4 py-2 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    <span>Hacer Nuevo Pedido</span>
+                  </Link>
+                </div>
+
+                {/* Sub-tabs: Reservas Activas vs Historial de Reservas */}
+                <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+                  <button
+                    onClick={() => setCompradorSubTab("activas")}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                      compradorSubTab === "activas"
+                        ? "bg-[#62B869] text-white shadow"
+                        : "bg-black/40 border border-white/10 text-stone-400 hover:text-white"
+                    }`}
+                  >
+                    Reservas Activas ({reservations.filter((r) => r.status === "pending" || r.status === "confirmed").length})
+                  </button>
+                  <button
+                    onClick={() => setCompradorSubTab("historial")}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                      compradorSubTab === "historial"
+                        ? "bg-amber-600 text-white shadow"
+                        : "bg-black/40 border border-white/10 text-stone-400 hover:text-white"
+                    }`}
+                  >
+                    Historial y Volver a Pedir ({reservations.filter((r) => r.status === "closed" || r.status === "rejected").length})
+                  </button>
+                </div>
+
+                {reservations.length === 0 ? (
+                  <div className="p-10 rounded-2xl bg-black/60 border border-white/10 text-center space-y-4">
+                    <div className="w-12 h-12 rounded-full bg-stone-800 flex items-center justify-center mx-auto text-stone-400">
+                      <ShoppingBag className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h5 className="text-base font-bold text-white">No tienes reservas registradas</h5>
+                      <p className="text-xs text-stone-400 max-w-sm mx-auto">
+                        Explora El Libretón de platos caseros preparados hoy por tus vecinas.
+                      </p>
+                    </div>
+                    <Link
+                      href="/menu"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs transition-all shadow-lg"
+                    >
+                      <span>Ir a El Libretón</span>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reservations
+                      .filter((res) =>
+                        compradorSubTab === "activas"
+                          ? res.status === "pending" || res.status === "confirmed"
+                          : res.status === "closed" || res.status === "rejected"
+                      )
+                      .map((res) => (
+                        <div
+                          key={res.id}
+                          className="p-5 rounded-2xl bg-black/60 border border-white/10 space-y-4 shadow-lg hover:border-white/20 transition-all"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-[#F0822D] font-bold">{res.id}</span>
+                                <span className="text-xs text-stone-400">| Cocinera: <strong className="text-amber-300">{res.cookName || "Doña Elena"}</strong></span>
+                              </div>
+                              <h5 className="text-base font-bold text-white mt-0.5">{res.dish}</h5>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {res.status === "pending" && (
+                                <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono flex items-center gap-1.5">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  Quedan: {getRemainingTime(res.expiresAt)}
+                                </span>
+                              )}
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                                res.status === "pending" ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" :
+                                res.status === "confirmed" ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" :
+                                res.status === "closed" ? "bg-sky-500/20 text-sky-300 border border-sky-500/30" : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                              }`}>
+                                {res.status === "pending" ? "En Espera" : res.status === "confirmed" ? "Confirmado" : res.status === "closed" ? "Completado" : "Rechazado"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-stone-300">
+                            <div>
+                              <span className="text-stone-500 block text-[10px] uppercase">Cantidad</span>
+                              <span className="font-semibold text-white">{res.quantity} porción(es)</span>
+                            </div>
+                            <div>
+                              <span className="text-stone-500 block text-[10px] uppercase">Medio de Pago</span>
+                              <span className="font-semibold text-amber-300">{res.paymentMethod}</span>
+                            </div>
+                            <div>
+                              <span className="text-stone-500 block text-[10px] uppercase">Recogida Est.</span>
+                              <span className="font-semibold text-white">{res.pickupTime || "15-20 min"}</span>
+                            </div>
+                            <div>
+                              <span className="text-stone-500 block text-[10px] uppercase">Total</span>
+                              <span className="font-bold text-[#F0822D]">{res.price}</span>
+                            </div>
+                          </div>
+
+                          {res.status === "rejected" && (
+                            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-200 text-xs">
+                              <strong>Motivo de rechazo:</strong> {res.rejectionReason || "Sin porciones disponibles"}
+                              {res.rejectionComment && <p className="text-[11px] text-rose-300 italic mt-1">"{res.rejectionComment}"</p>}
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
+                            <button
+                              onClick={() => setActiveChatReservationId(res.id)}
+                              className="px-4 py-2 rounded-xl bg-stone-900 border border-white/15 hover:border-[#F0822D] text-stone-200 hover:text-white text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
+                            >
+                              <MessageSquare className="w-4 h-4 text-[#F0822D]" />
+                              <span>Abrir Chat con Cocinera</span>
+                            </button>
+
+                            {compradorSubTab === "historial" && (
+                              <Link
+                                href="/menu"
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#F0822D] to-[#E06F1A] hover:brightness-110 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow cursor-pointer"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                <span>Volver a Pedir</span>
+                              </Link>
+                            )}
+
+                            {res.status === "confirmed" && !res.compradorClosedAt && (
+                              <button
+                                onClick={() => handleSimulateCompradorConfirm(res.id)}
+                                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>Confirmar Recepción y Cierre</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── 2. MIS CHATS ── */}
+            {activeRoleTab === "chats" && (
+              <div className="space-y-6 text-left">
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-[#1C1A24] border border-purple-500/30 rounded-2xl p-4 shadow-md">
+                  <div>
+                    <h4 className="text-sm font-bold text-purple-200 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-purple-400" />
+                      <span>Mis Conversaciones y Chats</span>
+                    </h4>
+                    <p className="text-xs text-stone-300">
+                      Canal directo de comunicación entre compradores y cocineras del barrio.
+                    </p>
+                  </div>
+                </div>
+
+                {reservations.length === 0 ? (
+                  <div className="p-10 rounded-2xl bg-black/60 border border-white/10 text-center space-y-4">
+                    <div className="w-12 h-12 rounded-full bg-stone-800 flex items-center justify-center mx-auto text-stone-400">
+                      <MessageSquare className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h5 className="text-base font-bold text-white">No tienes conversaciones activas</h5>
+                      <p className="text-xs text-stone-400 max-w-sm mx-auto">
+                        Al realizar una reserva en El Libretón, se abre automáticamente la sala de chat privada.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {reservations.map((res) => {
+                      const msgs = getStoredMessages(res.id);
+                      const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
+
+                      return (
+                        <div
+                          key={res.id}
+                          className="p-4 rounded-2xl bg-black/60 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg hover:border-purple-500/40 transition-all"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-full bg-[#F0822D]/20 border border-[#F0822D]/40 flex items-center justify-center text-[#F0822D] font-bold shrink-0 mt-0.5">
+                              <ChefHat className="w-5 h-5" />
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h5 className="text-sm font-bold text-white">{res.cookName || "Doña Elena"}</h5>
+                                <span className="text-xs text-stone-400 font-mono">({res.dish})</span>
+                              </div>
+
+                              <p className="text-xs text-stone-300 italic line-clamp-1">
+                                {lastMsg ? (
+                                  <span><strong>{lastMsg.sender}:</strong> "{lastMsg.text}"</span>
+                                ) : (
+                                  <span className="text-stone-500 font-normal">Sin mensajes recientes. Haz clic para chatear.</span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => setActiveChatReservationId(res.id)}
+                            className="px-4 py-2.5 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0 shadow-md"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                            <span>Abrir Chat</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── 3. NOTIFICACIONES (HU-17) ── */}
+            {activeRoleTab === "notificaciones" && (
+              <div className="space-y-6 text-left">
+                <div className="flex items-center justify-between bg-[#131D24] border border-sky-500/30 rounded-2xl p-4 shadow-md">
+                  <div>
+                    <h4 className="text-sm font-bold text-sky-200 flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-sky-400" />
+                      <span>Notificaciones y Avisos de Reservas (HU-17)</span>
+                    </h4>
+                    <p className="text-xs text-stone-300">
+                      Historial persistente de alertas sobre cambios de estado y mensajes entrantes.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const updated = notifications.map((n) => ({ ...n, read: true }));
+                      setNotifications(updated);
+                      saveNotifications(updated);
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-stone-900 border border-white/20 text-stone-300 text-xs font-semibold hover:text-white"
+                  >
+                    Marcar todas como leídas
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {notifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      className={`p-4 rounded-2xl border flex items-start justify-between gap-3 shadow transition-all ${
+                        notif.read ? "bg-black/40 border-white/10 text-stone-400" : "bg-sky-950/40 border-sky-500/40 text-white"
+                      }`}
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-amber-300">{notif.title}</span>
+                          <span className="text-[10px] text-stone-500 font-mono">{notif.timestamp}</span>
+                        </div>
+                        <p className="text-xs">{notif.message}</p>
+                      </div>
+
+                      {!notif.read && (
+                        <button
+                          onClick={() => {
+                            const updated = notifications.map((n) =>
+                              n.id === notif.id ? { ...n, read: true } : n
+                            );
+                            setNotifications(updated);
+                            saveNotifications(updated);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40 text-[10px] font-bold"
+                        >
+                          Leído
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── 4. MODO COCINERA (ONBOARDING, INGRESO DEL MES HU-20, MIS PLATOS & AJUSTAR DISPONIBILIDAD HU-24) ── */}
+            {activeRoleTab === "cocinero" && (
+              <div className="space-y-6 text-left">
+                
+                {/* ONBOARDING & ACTIVACIÓN CON CONSENTIMIENTO (GAP 6) */}
+                {user && !user.isCocineraActive && (
+                  <div className="p-6 rounded-2xl bg-[#201712] border-2 border-[#F0822D]/60 space-y-4 shadow-xl">
+                    <h4 className="text-base font-bold text-amber-200 flex items-center gap-2">
+                      <ChefHat className="w-5 h-5 text-[#F0822D]" />
+                      <span>Activar Perfil de Cocinera Vecinal</span>
+                    </h4>
+                    <p className="text-xs text-stone-300 leading-relaxed">
+                      Para habilitar la publicación de platos y vender tus porciones sobrantes a vecinos cercanos, debes aceptar la política de tratamiento de datos personales (Habeas Data) y términos de convivencia.
+                    </p>
+
+                    <label className="flex items-start gap-3 p-3 rounded-xl bg-black/40 border border-white/10 text-xs text-stone-200 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={user.dataConsentAccepted || false}
+                        onChange={(e) => {
+                          const updated = { ...user, dataConsentAccepted: e.target.checked };
+                          setUser(updated);
+                          localStorage.setItem("ollacercana_user", JSON.stringify(updated));
+                        }}
+                        className="accent-[#F0822D] w-4 h-4 rounded mt-0.5"
+                      />
+                      <span>
+                        Acepto la <strong>Política de Tratamiento de Datos Personales</strong> (Habeas Data Ley 1581) y los Términos de Servicio para Cocineras de Barrio.
+                      </span>
+                    </label>
+
+                    <button
+                      onClick={() => {
+                        if (!user.dataConsentAccepted) {
+                          alert("Debes aceptar el tratamiento de datos para activar tu perfil de cocinera.");
+                          return;
+                        }
+                        const updated = { ...user, isCocineraActive: true };
+                        setUser(updated);
+                        localStorage.setItem("ollacercana_user", JSON.stringify(updated));
+                        alert("¡Perfil de cocinera activado exitosamente!");
+                      }}
+                      className="w-full py-3 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                    >
+                      Activar perfil de cocinera
+                    </button>
+                  </div>
+                )}
+
+                {/* INGRESO DEL MES & HISTORIAL RESUMIDO (GAP 7 / HU-20) */}
+                <div className="p-5 rounded-2xl bg-[#141E17] border border-emerald-500/30 space-y-4 shadow-lg">
+                  <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3">
+                    <h4 className="text-sm font-bold text-emerald-300 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      <span>Ingreso del Mes (Referencial HU-20)</span>
+                    </h4>
+                    <button
+                      onClick={() => setIsSalesHistoryModalOpen(true)}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-1.5"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      Ver Historial Completo
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div className="p-3.5 rounded-xl bg-black/50 border border-white/10 space-y-1">
+                      <span className="text-stone-400 text-[10px] uppercase font-bold">Ingreso Total Mes</span>
+                      <span className="text-xl font-black text-emerald-400 block">$240.000 COP</span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-black/50 border border-white/10 space-y-1">
+                      <span className="text-stone-400 text-[10px] uppercase font-bold">Porciones Entregadas</span>
+                      <span className="text-xl font-black text-amber-300 block">14 porciones</span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-black/50 border border-white/10 space-y-1">
+                      <span className="text-stone-400 text-[10px] uppercase font-bold">Plato Estrella</span>
+                      <span className="text-sm font-bold text-white block truncate">Ajiaco de la casa (4,9 ★)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ACTION BAR & MIS PLATOS PUBLICADOS (GAP 8 & GAP 9 / HU-24) */}
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-[#18231B] border border-amber-600/30 rounded-2xl p-4 shadow-md">
+                  <div>
+                    <h4 className="text-sm font-bold text-amber-200">Mis Platos Publicados y Disponibilidad (HU-24)</h4>
+                    <p className="text-xs text-amber-300/80">Aumenta, disminuye o marca platos como agotados en tiempo real</p>
+                  </div>
+                  <button
+                    onClick={() => setIsPublishDishModalOpen(true)}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#F0822D] to-[#E06F1A] hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    <span>Publicar Nuevo Plato</span>
+                  </button>
+                </div>
+
+                {dishAvailabilityError && (
+                  <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs">
+                    {dishAvailabilityError}
+                  </div>
+                )}
+
+                {/* DISH LIST FOR AJUSTAR DISPONIBILIDAD (HU-24) */}
+                <div className="space-y-3">
+                  {dishesList.slice(0, 4).map((d) => (
+                    <div
+                      key={d.id}
+                      className="p-4 rounded-2xl bg-black/60 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md"
+                    >
+                      <div className="flex items-center gap-3">
+                        <img src={d.image} alt={d.name} className="w-12 h-12 rounded-xl object-cover border border-amber-600/40 shrink-0" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h5 className="text-sm font-bold text-white">{d.name}</h5>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              d.status === "DISPONIBLE" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"
+                            }`}>
+                              {d.status}
+                            </span>
+                          </div>
+                          <p className="text-xs text-amber-300 font-mono">{d.formattedPrice} • {d.availablePortions}/{d.totalPortions} porciones disponibles</p>
+                        </div>
+                      </div>
+
+                      {/* Controls: Aumentar / Disminuir / Marcar Agotado (HU-24) */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setDishAvailabilityError(null);
+                            const updated = dishesList.map((item) => {
+                              if (item.id === d.id) {
+                                const newTotal = item.totalPortions + 1;
+                                const newAvail = item.availablePortions + 1;
+                                return { ...item, totalPortions: newTotal, availablePortions: newAvail, status: "DISPONIBLE" as const };
+                              }
+                              return item;
+                            });
+                            setDishesList(updated);
+                            saveDishes(updated);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold flex items-center gap-1"
+                          title="Aumentar disponibilidad"
+                        >
+                          <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>+1</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setDishAvailabilityError(null);
+                            if (d.reservedPortions > 0 && d.totalPortions - 1 < d.reservedPortions) {
+                              setDishAvailabilityError(`Tienes ${d.reservedPortions} porciones reservadas (no se puede reducir por debajo de lo comprometido).`);
+                              return;
+                            }
+                            if (d.availablePortions <= 0) return;
+                            const updated = dishesList.map((item) => {
+                              if (item.id === d.id) {
+                                const newAvail = Math.max(0, item.availablePortions - 1);
+                                return {
+                                  ...item,
+                                  availablePortions: newAvail,
+                                  status: (newAvail === 0 ? "AGOTADO" : "DISPONIBLE") as any,
+                                };
+                              }
+                              return item;
+                            });
+                            setDishesList(updated);
+                            saveDishes(updated);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold flex items-center gap-1"
+                          title="Disminuir disponibilidad"
+                        >
+                          <Minus className="w-3.5 h-3.5 text-rose-400" />
+                          <span>-1</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setDishAvailabilityError(null);
+                            const updated = dishesList.map((item) => {
+                              if (item.id === d.id) {
+                                return { ...item, availablePortions: 0, status: "AGOTADO" as const };
+                              }
+                              return item;
+                            });
+                            setDishesList(updated);
+                            saveDishes(updated);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-rose-950 border border-rose-500/40 text-rose-300 text-xs font-semibold flex items-center gap-1"
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                          <span>Agotado</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* RESERVATIONS MANAGEMENT FOR COOK */}
+                <div className="flex items-center justify-between border-b border-white/10 pb-3 pt-4">
+                  <h4 className="text-sm font-bold text-[#F0822D] flex items-center gap-2">
+                    <ChefHat className="w-4 h-4" />
+                    <span>Gestión de Solicitudes Entrantes</span>
+                  </h4>
+                </div>
+
+                <div className="space-y-4">
+                  {reservations.map((res) => (
+                    <div
+                      key={res.id}
+                      className="p-5 rounded-2xl bg-black/60 border border-white/10 space-y-4 shadow-lg"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+                        <div>
+                          <span className="text-xs font-mono text-[#F0822D] font-bold">{res.id}</span>
+                          <h5 className="text-base font-bold text-white">{res.dish}</h5>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {res.status === "pending" && (
+                            <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5" />
+                              Quedan: {getRemainingTime(res.expiresAt)}
+                            </span>
+                          )}
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                            res.status === "pending" ? "bg-amber-500/20 text-amber-300" :
+                            res.status === "confirmed" ? "bg-emerald-500/20 text-emerald-300" :
+                            res.status === "closed" ? "bg-sky-500/20 text-sky-300" : "bg-rose-500/20 text-rose-300"
+                          }`}>
+                            {res.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-stone-300">
+                        <div>
+                          <span className="text-stone-500 block text-[10px] uppercase">Comprador</span>
+                          <span className="font-semibold text-white">{res.buyerName}</span>
+                        </div>
+                        <div>
+                          <span className="text-stone-500 block text-[10px] uppercase">Cantidad</span>
+                          <span className="font-semibold text-white">{res.quantity} porciones</span>
+                        </div>
+                        <div>
+                          <span className="text-stone-500 block text-[10px] uppercase">Pago</span>
+                          <span className="font-semibold text-amber-300">{res.paymentMethod}</span>
+                        </div>
+                        <div>
+                          <span className="text-stone-500 block text-[10px] uppercase">Total</span>
+                          <span className="font-bold text-[#F0822D]">{res.price}</span>
+                        </div>
+                      </div>
+
+                      {res.status === "pending" && (
+                        <div className="flex items-center gap-3 pt-2">
+                          <button
+                            onClick={() => handleConfirmReservation(res.id)}
+                            className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                          >
+                            <Check className="w-4 h-4" />
+                            Confirmar Reserva
+                          </button>
+                          <button
+                            onClick={() => handleOpenRejectModal(res.id)}
+                            className="flex-1 py-2.5 rounded-xl bg-stone-900 border border-stone-700 hover:border-rose-500 text-stone-300 hover:text-rose-300 font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                          >
+                            <X className="w-4 h-4" />
+                            Rechazar
+                          </button>
+                        </div>
+                      )}
+
+                      {res.status === "confirmed" && (
+                        <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+                          <h6 className="text-xs font-bold uppercase tracking-wider text-[#F0822D] flex items-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4" />
+                            Cierre de Entrega (HU-23)
+                          </h6>
+
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <label className="flex items-center gap-2 text-xs text-stone-200 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={res.cocineraConfirmedDelivery}
+                                onChange={() => handleToggleCocineraCheck(res.id, "delivery")}
+                                className="accent-[#F0822D] w-4 h-4 rounded"
+                              />
+                              <span>Entregado</span>
+                            </label>
+
+                            <label className="flex items-center gap-2 text-xs text-stone-200 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={res.cocineraConfirmedPayment}
+                                onChange={() => handleToggleCocineraCheck(res.id, "payment")}
+                                className="accent-[#F0822D] w-4 h-4 rounded"
+                              />
+                              <span>Pagado</span>
+                            </label>
+
+                            <button
+                              onClick={() => handleConfirmClosing(res.id)}
+                              disabled={!res.cocineraConfirmedDelivery || !res.cocineraConfirmedPayment || !!res.cocineraClosedAt}
+                              className="px-5 py-2 rounded-xl bg-[#F0822D] hover:bg-[#d97224] disabled:opacity-40 text-white font-bold text-xs transition-all cursor-pointer disabled:cursor-not-allowed"
+                            >
+                              {res.cocineraClosedAt ? "Cierre Enviado" : "Confirmar Cierre"}
+                            </button>
+                          </div>
+
+                          {res.cocineraClosedAt && !res.compradorClosedAt && (
+                            <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-center justify-between">
+                              <span className="flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5" /> Confirmación pendiente por el comprador.
+                              </span>
+                              <button
+                                onClick={() => handleSimulateCompradorConfirm(res.id)}
+                                className="px-2.5 py-1 rounded bg-amber-400 text-black text-[10px] font-bold"
+                              >
+                                Simular Cierre Comprador
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {res.status === "closed" && (
+                        <div className="p-3 rounded-xl bg-sky-950/60 border border-sky-500/40 flex items-center justify-between text-xs text-sky-200">
+                          <span className="flex items-center gap-2 font-semibold">
+                            <CheckCircle2 className="w-4 h-4 text-sky-400" />
+                            Transacción completada {res.isAutoClosed ? "(Cierre automático por 24h)" : ""}
+                          </span>
+                          
+                          {!res.rated ? (
+                            <button
+                              onClick={() => setRatingResId(res.id)}
+                              className="px-4 py-1.5 rounded-lg bg-sky-400 hover:bg-sky-300 text-black font-bold text-xs transition-colors cursor-pointer"
+                            >
+                              Calificar
+                            </button>
+                          ) : (
+                            <span className="text-amber-300 font-mono">★ Calificado</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeRoleTab === "admin" && (
+              <div className="space-y-4">
+                <AdminModerationSection currentUser={{ ...user, role: user.role }} />
+              </div>
+            )}
+
+            <form onSubmit={handleProfileSave} className="space-y-4 text-left border-t border-white/10 pt-6">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-[#F0822D]" />
+                  Perfil & Datos Comerciales
+                </h4>
+                {profileSuccess && (
+                  <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" /> Perfil Actualizado
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-stone-300">Nombre Comercial</label>
+                <input
+                  type="text"
+                  value={commercialName}
+                  onChange={(e) => setCommercialName(e.target.value)}
+                  placeholder="ej: Cocina de Doña Elena"
+                  className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:border-[#F0822D] outline-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-stone-300">Presentación / Biografía</label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={2}
+                  className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:border-[#F0822D] outline-none resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-stone-300 flex items-center gap-1">
+                  <Building className="w-3.5 h-3.5 text-[#F0822D]" /> Conjunto Residencial / Barrio
+                </label>
+                <input
+                  type="text"
+                  value={residentialComplex}
+                  onChange={(e) => setResidentialComplex(e.target.value)}
+                  className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:border-[#F0822D] outline-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-stone-300 flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5 text-[#F0822D]" /> Teléfono (Modificar activa OTP)
+                </label>
+                <input
+                  type="text"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  maxLength={10}
+                  className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:border-[#F0822D] outline-none font-mono"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-stone-300 flex items-center gap-1">
+                  <CreditCard className="w-3.5 h-3.5 text-[#F0822D]" /> Medios de Pago
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  {["Efectivo", "Nequi", "Daviplata"].map((method) => {
+                    const isSelected = selectedPaymentMethods.includes(method);
+                    return (
+                      <button
+                        type="button"
+                        key={method}
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedPaymentMethods(selectedPaymentMethods.filter((m) => m !== method));
+                          } else {
+                            setSelectedPaymentMethods([...selectedPaymentMethods, method]);
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-[#F0822D]/20 border-[#F0822D] text-[#F0822D]"
+                            : "bg-black/40 border-white/20 text-stone-400"
+                        }`}
+                      >
+                        {isSelected ? "✓ " : ""}{method}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg"
+              >
+                Guardar Perfil
+              </button>
+            </form>
+
+          </div>
+        )}
+      </div>
+
+      {/* ── CORNER MENU (BOTTOM-RIGHT CORNER MATCHING REFERENCE LAYOUT) ── */}
+      <footer className="relative z-10 w-full px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 bg-black/40 backdrop-blur-md">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-stone-400 hover:text-white transition-colors"
+        >
+          <Home className="w-4 h-4 text-[#F0822D]" />
+          <span>Volver a OllaCercana</span>
+        </Link>
+
+        <div className="flex flex-wrap items-center justify-end gap-6 text-xs font-bold tracking-widest uppercase text-stone-300">
+          {!user ? (
+            <button
+              onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}
+              className="hover:text-white flex items-center gap-2 transition-colors cursor-pointer"
+            >
+              <UserPlus className="w-3.5 h-3.5 text-[#F0822D]" />
+              <span>{authMode === "login" ? "Crear cuenta" : "Iniciar sesión"}</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setActiveRoleTab(activeRoleTab === "cocinero" ? "comprador" : "cocinero")}
+              className="hover:text-white flex items-center gap-2 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-[#62B869]" />
+              <span>Cambiar de rol</span>
+            </button>
+          )}
+
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              alert("Centro de Ayuda OllaCercana: Soporte para cocineras y compradores vecinales.");
+            }}
+            className="hover:text-white flex items-center gap-2 transition-colors"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-stone-400" />
+            <span>Ayuda</span>
+          </a>
+
+          <span className="text-[11px] text-stone-500 font-mono tracking-normal">v2.4</span>
+        </div>
+      </footer>
+
+      {/* ── MODALS (REJECTION REASON / OTP / RATING) ── */}
+      {rejectingResId && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-[#1A1C1E] border border-white/20 rounded-3xl p-6 shadow-2xl space-y-4 text-left">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h4 className="text-sm font-bold text-rose-400">Rechazar Solicitud {rejectingResId}</h4>
+              <button onClick={() => setRejectingResId(null)} className="text-stone-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {rejectError && (
+              <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs">
+                {rejectError}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-xs text-stone-300 font-medium block">Motivo del rechazo</label>
+              <select
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-2.5 text-xs text-white outline-none"
+              >
+                <option value="Sin porciones disponibles">Sin porciones disponibles</option>
+                <option value="No alcancé a entregar">No alcancé a entregar</option>
+                <option value="Pedido incompatible">Pedido incompatible</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs text-stone-300 font-medium block">
+                Observación {rejectReason === "Otro" ? "(Obligatoria)" : "(Opcional)"}
+              </label>
+              <textarea
+                value={rejectComment}
+                onChange={(e) => setRejectComment(e.target.value)}
+                rows={3}
+                placeholder="Explica brevemente al comprador..."
+                className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-xs text-white outline-none resize-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => setRejectingResId(null)}
+                className="flex-1 py-2.5 rounded-xl border border-white/20 text-stone-400 text-xs font-semibold"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSubmitReject}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold"
+              >
+                Confirmar Rechazo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showOtpModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-sm w-full bg-[#1A1C1E] border border-[#F0822D]/40 rounded-3xl p-6 shadow-2xl text-center space-y-5">
+            <div className="w-12 h-12 rounded-full bg-[#F0822D]/20 border border-[#F0822D]/40 flex items-center justify-center text-[#F0822D] mx-auto">
+              <KeyRound className="w-6 h-6" />
+            </div>
+
+            <div>
+              <h4 className="text-base font-bold text-white">Verificación OTP Celular</h4>
+              <p className="text-xs text-stone-400 mt-1">
+                Código de 6 dígitos enviado al <span className="text-[#F0822D] font-mono">{editPhone}</span>
+              </p>
+            </div>
+
+            {otpError && (
+              <div className="w-full p-2.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs">
+                {otpError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-center gap-2">
+              {otpDigits.map((digit, idx) => (
+                <input
+                  key={idx}
+                  id={`otp-input-${idx}`}
+                  type="text"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const updated = [...otpDigits];
+                    updated[idx] = val;
+                    setOtpDigits(updated);
+                    if (val && idx < 5) {
+                      const nextInput = document.getElementById(`otp-input-${idx + 1}`);
+                      nextInput?.focus();
+                    }
+                  }}
+                  className="w-10 h-12 text-center text-lg font-bold bg-black/60 border border-white/20 rounded-xl focus:border-[#F0822D] text-white outline-none"
+                />
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-stone-400">
+              <span className="font-mono text-amber-400">Expira en: {formatTimer(otpTimer)}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setOtpTimer(300);
+                  setOtpError("");
+                  setOtpDigits(["", "", "", "", "", ""]);
+                  alert("Nuevo código enviado.");
+                }}
+                className="text-[#F0822D] hover:underline flex items-center gap-1"
+              >
+                <RefreshCw className="w-3 h-3" /> Reenviar
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => setShowOtpModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-white/20 text-stone-400 text-xs font-semibold"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleVerifyOtp}
+                className="flex-1 py-2.5 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs"
+              >
+                Validar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {ratingResId && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-sm w-full bg-[#1A1C1E] border border-sky-500/40 rounded-3xl p-6 shadow-2xl text-center space-y-4">
+            <h4 className="text-base font-bold text-white">Calificar Transacción</h4>
+            <p className="text-xs text-stone-300">¿Cómo fue la experiencia del pedido {ratingResId}?</p>
+
+            <div className="flex items-center justify-center gap-2 my-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRatingStars(star)}
+                  className="p-1 text-amber-400 hover:scale-125 transition-transform"
+                >
+                  <Star className={`w-7 h-7 ${star <= ratingStars ? "fill-amber-400" : "text-stone-700"}`} />
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleRatingSubmit}
+              className="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold text-xs"
+            >
+              Guardar Calificación
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── JIRA SPECIFICATION MODALS ── */}
+      {user && (
+        <PublishDishModal
+          isOpen={isPublishDishModalOpen}
+          onClose={() => setIsPublishDishModalOpen(false)}
+          currentUser={user}
+          onDishPublished={() => {
+            setIsPublishDishModalOpen(false);
+          }}
+          onRequestPhoneVerification={() => setIsPhoneModalOpen(true)}
+        />
+      )}
+
+      {user && (
+        <SalesHistoryModal
+          isOpen={isSalesHistoryModalOpen}
+          onClose={() => setIsSalesHistoryModalOpen(false)}
+          currentUser={user}
+        />
+      )}
+
+      {user && (
+        <ChatModal
+          isOpen={!!activeChatReservationId}
+          onClose={() => setActiveChatReservationId(null)}
+          reservationId={activeChatReservationId}
+          currentUser={user}
+          onOpenRatingModal={(resId) => setRatingResId(resId)}
+        />
+      )}
+
+      {user && (
+        <PhoneVerificationModal
+          isOpen={isPhoneModalOpen}
+          onClose={() => setIsPhoneModalOpen(false)}
+          phone={user.phone}
+          onVerified={() => {
+            const updated = { ...user, phoneVerified: true };
+            setUser(updated);
+            localStorage.setItem("ollacercana_user", JSON.stringify(updated));
+          }}
+        />
+      )}
+    </main>
+  );
+}
