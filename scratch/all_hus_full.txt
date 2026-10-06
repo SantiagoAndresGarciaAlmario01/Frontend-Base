@@ -1,0 +1,275 @@
+=== ALL 24 USER STORIES FROM JIRA.CSV (24) ===
+
+
+================================================================================
+KEY: OC-17 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-01: Registro de Cuenta en la Plataforma
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador o Cocinera, quiero registrarme en OllaCercana proporcionando mis datos personales, para acceder a la plataforma y conectarme con mi comunidad vecinal.
+* *Descripción:* Permite a un nuevo vecino crear una cuenta en el sistema ingresando correo electrónico, nombre completo, rol inicial (Comprador o Cocinera) y contraseña de acceso.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que el vecino ingresa un correo no registrado previamente y cumple con todos los campos obligatorios, _CUANDO_ presiona "Registrarse", _ENTONCES_ el sistema crea la cuenta de forma exitosa y lo redirige a la pantalla de inicio de sesión.
+** *Escenario 2 (Camino de error - Correo existente):* _DADO_ que el vecino ingresa un correo electrónico que ya se encuentra registrado, _CUANDO_ intenta completar el formulario, _ENTONCES_ el sistema detiene el proceso y muestra el mensaje: "El correo ya se encuentra registrado".
+** *Escenario 3 (Camino condicional - Campos incompletos):* _DADO_ que el vecino omite completar el campo de nombre o rol, _CUANDO_ intenta enviar el formulario, _ENTONCES_ el sistema resalta los campos faltantes y deshabilita el botón de registro.
+
+================================================================================
+KEY: OC-18 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-02: Inicio de Sesión de Usuario
+--------------------------------------------------------------------------------
+* *Título:* Como Usuario registrado, quiero iniciar sesión con mis credenciales, para ingresar a mi panel personalizado según mi rol.
+* *Descripción:* Permite la validación de identidad del usuario para ingresar de manera segura a sus funciones de comprador o cocinera.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que el usuario ingresa su correo y contraseña correctos, _CUANDO_ hace clic en "Iniciar Sesión", _ENTONCES_ el sistema concede acceso e ingresa a la pantalla principal correspondiente a su perfil.
+** *Escenario 2 (Camino de error - Credenciales inválidas):* _DADO_ que el usuario ingresa una contraseña errónea, _CUANDO_ intenta autenticarse, _ENTONCES_ el sistema muestra la alerta "Credenciales inválidas" y no permite el ingreso.
+** *Escenario 3 (Camino de error - Usuario inexistente):* _DADO_ que el usuario escribe un correo que no está registrado, _CUANDO_ presiona ingresar, _ENTONCES_ el sistema indica "El usuario no existe" y sugiere la opción de registro.
+
+================================================================================
+KEY: OC-19 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-03: Configuración de Perfil de Cocinera y Conjunto Residencial
+--------------------------------------------------------------------------------
+* *Título:* Como Cocinera, quiero configurar la información de mi perfil (nombre comercial, conjunto residencial y número telefónico verificado), para habilitar mi cuenta y garantizar que mis ofertas sean visibles únicamente para los vecinos de mi zona.
+* *Descripción:* Permite a la cocinera gestionar su nombre comercial, biografía corta, seleccionar el conjunto residencial o barrio registrado donde cocina (cumpliendo {{RN-05}}), e ingresar/verificar su número telefónico mediante un código de validación (cumpliendo {{RN-01}}). La verificación telefónica es el requisito indispensable para habilitar el botón de publicación de platos en la plataforma.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que la cocinera ingresa su nombre comercial, selecciona su conjunto residencial e ingresa un número de teléfono válido, _CUANDO_ valida el código de verificación enviado a su celular y guarda los cambios, _ENTONCES_ el sistema guarda el perfil, marca el estado del teléfono como _"Verificado"_ y habilita el permiso para publicar platos caseros.
+** *Escenario 2 (Camino de error - Sin conjunto seleccionado):* _DADO_ que la cocinera intenta guardar su perfil sin seleccionar un conjunto residencial de la lista disponible, _CUANDO_ presiona _"Guardar"_, _ENTONCES_ el sistema impide el guardado y muestra el mensaje de error: _"Debe seleccionar un conjunto residencial registrado"_.
+** *Escenario 3 (Camino de restricción / Regla de negocio RN-01 - Teléfono no verificado):* _DADO_ que la cocinera ha guardado sus datos de perfil pero no ha completado el proceso de verificación de su número telefónico, _CUANDO_ intenta acceder a la sección _"Publicar plato"_, _ENTONCES_ el sistema bloquea la acción y muestra el mensaje: _"Debes verificar tu número telefónico en tu perfil antes de poder realizar tu primera publicación"_.
+** *Escenario 4 (Camino condicional - Edición de datos existentes):* _DADO_ que la cocinera edita su nombre comercial o biografía en un perfil que ya tiene el teléfono verificado, _CUANDO_ guarda las modificaciones, _ENTONCES_ los datos públicos se actualizan inmediatamente sin requerir una nueva verificación SMS (a menos que modifique la cifra de su número telefónico).
+
+================================================================================
+KEY: OC-20 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-04: Publicar Oferta de Comida Casera del Día
+--------------------------------------------------------------------------------
+* *Título:* Como Cocinera, quiero publicar un plato detallando su nombre, descripción y fotografía real, para ofertarlo a los vecinos cercanos interesados.
+* *Descripción:* Creación y despliegue de una oferta gastronómica del día en la plataforma por parte de la cocinera.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que la cocinera con teléfono verificado llena el formulario con fotografía, nombre del plato y descripción, _CUANDO_ presiona "Publicar plato", _ENTONCES_ la publicación pasa a estado "Disponible" y es visible en la zona.
+** *Escenario 2 (Camino de error - Teléfono no verificado):* _DADO_ que la cocinera no ha completado la verificación telefónica, _CUANDO_ intenta publicar un plato, _ENTONCES_ el sistema bloquea la acción y la redirige al módulo de verificación.
+** *Escenario 3 (Camino condicional - Sin foto adjunta):* _DADO_ que la cocinera intenta publicar sin subir una imagen del plato, _CUANDO_ presiona guardar, _ENTONCES_ el sistema exige la carga de una foto como campo obligatorio antes de continuar.
+
+================================================================================
+KEY: OC-21 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-05: Establecer Porciones Disponibles y Precio por Porción
+--------------------------------------------------------------------------------
+* *Título:* Como Cocinera, quiero especificar el número de porciones disponibles y el precio unitario del plato, para controlar mi inventario y congelar la tarifa al momento de reservar.
+* *Descripción:* Definición del volumen de venta y tarifa comercial para la publicación activa.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que la cocinera asigna 5 porciones a un precio de $12.000 COP cada una, _CUANDO_ confirma la publicación, _ENTONCES_ el sistema registra el inventario inicial y establece ese precio como fijo para todas las reservas de esa publicación.
+** *Escenario 2 (Camino de error - Porciones en cero):* _DADO_ que la cocinera ingresa 0 en la cantidad de porciones, _CUANDO_ intenta publicar, _ENTONCES_ el sistema indica "Debe publicar al menos 1 porción".
+** *Escenario 3 (Camino condicional - Precio fuera de rango):* _DADO_ que la cocinera ingresa un precio negativo o nulo, _CUANDO_ intenta guardar, _ENTONCES_ el sistema resalta el error "El precio por porción debe ser mayor a cero".
+
+================================================================================
+KEY: OC-22 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-06: Consultar Platos Disponibles por Radio de Distancia
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador, quiero consultar la lista de platos caseros disponibles dentro de un radio de 500m a 2km de mi ubicación, para encontrar comida cercana y económica.
+* *Descripción:* Búsqueda y listado de ofertas gastronómicas activas en la zona geográfica del usuario.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que el comprador tiene activa su ubicación y existen platos vigentes a 800 metros, _CUANDO_ ingresa a la pestaña "Explorar", _ENTONCES_ el sistema despliega las tarjetas de los platos ordenadas por cercanía.
+** *Escenario 2 (Camino de error - Sin ubicación habilitada):* _DADO_ que el comprador deniega el permiso de ubicación, _CUANDO_ intenta buscar platos, _ENTONCES_ el sistema le solicita seleccionar manualmente un conjunto residencial para poder mostrar ofertas.
+** *Escenario 3 (Camino condicional - Estado vacío por distancia):* _DADO_ que no existen publicaciones activas a menos de 2km, _CUANDO_ el comprador realiza la búsqueda, _ENTONCES_ el sistema despliega la pantalla de estado vacío: "Todavía no hay platos en tu zona. Amplía el radio de búsqueda".
+** *Escenario 4 (Dirección manual):* DADO que el comprador no tiene GPS, CUANDO escribe una dirección o su conjunto y la selecciona del autocompletado, ENTONCES el sistema geocodifica y muestra los platos en el radio de esa ubicación.
+
+================================================================================
+KEY: OC-23 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-07: Filtrar Platos por Tipo de Menú
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador, quiero filtrar las publicaciones por categorías como Almuerzo, Cena, Postres o Sopas, para encontrar rápidamente el menú de mi preferencia.
+* *Descripción:* Herramienta de clasificación rápida para acotar el catálogo según el tipo de plato deseado.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que el comprador selecciona la categoría "Almuerzo", _CUANDO_ aplica el filtro, _ENTONCES_ la lista se actualiza mostrando únicamente las ofertas etiquetadas como almuerzo.
+** *Escenario 2 (Camino de error - Categoría sin platos):* _DADO_ que el comprador selecciona la categoría "Postres" y no hay ofertas vigentes de ese tipo, _CUANDO_ aplica el filtro, _ENTONCES_ se muestra el mensaje "No hay postres disponibles en este momento".
+** *Escenario 3 (Camino condicional - Limpieza de filtros):* _DADO_ que el comprador presiona el botón "Limpiar filtros", _CUANDO_ ejecuta la acción, _ENTONCES_ la pantalla vuelve a mostrar la totalidad de los platos disponibles en el radio.
+
+================================================================================
+KEY: OC-24 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-08: Filtrar Platos por Etiquetas Dietéticas
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador con necesidades dietéticas, quiero filtrar la lista de platos según etiquetas como Vegetariano, Sin Gluten o Sin Lactosa, para asegurar que puedo consumirlos sin riesgo.
+* *Descripción:* Selección de ofertas culinarias adaptadas a preferencias o restricciones alimentarias específicas.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que el comprador activa la casilla "Vegetariano", _CUANDO_ consulta los resultados, _ENTONCES_ se listan únicamente las publicaciones declaradas como vegetarianas por la cocinera.
+** *Escenario 2 (Camino de error - Múltiples filtros restrictivos sin coincidencia):* _DADO_ que el comprador selecciona "Sin Gluten" y "Vegano" simultáneamente y ningún plato cumple ambas condiciones, _CUANDO_ busca, _ENTONCES_ el sistema informa "No hay opciones disponibles que cumplan todos los filtros seleccionados".
+** *Escenario 3 (Camino condicional - Visualización de insignias):* _DADO_ que un plato cumple con una restricción, _CUANDO_ aparece en los resultados, _ENTONCES_ la tarjeta muestra claramente una etiqueta visual verde identificando la característica.
+
+================================================================================
+KEY: OC-25 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-09: Consultar Mapa Interactivo de Cocineras
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador, quiero visualizar los puntos de las cocineras activas en un mapa interactivo, para ubicar la cercanía física de la comida antes de decidir.
+* *Descripción:* Representación cartográfica de las cocineras con platos disponibles dentro de la zona.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que hay 3 cocineras con publicaciones vigentes en el sector, _CUANDO_ el comprador abre la vista "Mapa", _ENTONCES_ se despliegan 3 marcadores en las zonas de los conjuntos correspondientes.
+** *Escenario 2 (Camino de error - Sin cocineras activas en el área):* _DADO_ que la zona no cuenta con ofertas, _CUANDO_ se carga el mapa, _ENTONCES_ se muestra la ubicación del usuario con un mensaje indicando "Sin cocineras activas alrededor".
+** *Escenario 3 (Camino condicional - Selección de marcador):* _DADO_ que el comprador presiona un marcador en el mapa, _CUANDO_ interactúa con él, _ENTONCES_ se abre una ventana flotante con la foto del plato, precio y distancia estimada.
+
+================================================================================
+KEY: OC-26 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-10: Ocultamiento de Dirección Exacta de la Cocinera
+--------------------------------------------------------------------------------
+* *Título:* Como Cocinera, quiero que mi dirección exacta y número de apartamento permanezcan ocultos al público, para proteger mi privacidad y mostrar únicamente el conjunto residencial como referencia.
+* *Descripción:* Resguardo de la dirección privada de la cocinera, mostrando únicamente la zona o conjunto residencial.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que un comprador navega por una publicación, _CUANDO_ observa la información de ubicación, _ENTONCES_ la interfaz muestra únicamente "Conjunto San Luis" y la distancia en metros.
+** *Escenario 2 (Camino de error - Intento de ver dirección sin confirmación):* _DADO_ que la reserva no ha sido confirmada por la cocinera, _CUANDO_ el comprador revisa los detalles del pedido, _ENTONCES_ la dirección exacta no aparece disponible en ninguna sección.
+** *Escenario 3 (Camino condicional - Coordinación tras reserva):* _DADO_ que la reserva es confirmada, _CUANDO_ se habilita el canal de chat, _ENTONCES_ la cocinera puede indicar por mensaje el punto de encuentro en la portería o zona común.
+
+================================================================================
+KEY: OC-27 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-11: Apartar Porciones de Comida Casera
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador, quiero solicitar el apartado de una o varias porciones de un plato activo, para asegurar mi comida antes de que se agote.
+* *Descripción:* Solicitud formal de reserva de porciones de comida por parte de un comprador.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que el plato tiene 3 porciones disponibles, _CUANDO_ el comprador presiona "Apartar porción" seleccionando 1 unidad, _ENTONCES_ el sistema crea la solicitud en estado "Pendiente de confirmación" y congela el precio acordado.
+** *Escenario 2 (Camino de error - Exceso de porciones):* _DADO_ que quedan 2 porciones y el comprador intenta solicitar 3, _CUANDO_ presiona apartar, _ENTONCES_ el sistema detiene el proceso y muestra "Solo quedan 2 porciones disponibles".
+** *Escenario 3 (Camino condicional - Plato sin stock):* _DADO_ que un plato tiene 0 porciones disponibles, _CUANDO_ un comprador ingresa a la tarjeta, _ENTONCES_ el botón "Apartar porción" se muestra deshabilitado.
+
+================================================================================
+KEY: OC-28 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-12: Aceptar o Rechazar Solicitudes de Reserva
+--------------------------------------------------------------------------------
+* *Título:* Como Cocinera, quiero revisar las solicitudes de reserva entrantes para aceptarlas o rechazarlas, para controlar las entregas en mi hogar.
+* *Descripción:* Gestión de aprobación de pedidos por parte de la cocinera.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz - Aceptación):* _DADO_ que la cocinera tiene una solicitud pendiente, _CUANDO_ presiona "Confirmar", _ENTONCES_ el pedido pasa a estado "Confirmado", se descuenta la porción del inventario y se habilita la coordinación de entrega.
+** *Escenario 2 (Camino de error - Rechazo de reserva):* _DADO_ que la cocinera no puede atender la solicitud, _CUANDO_ presiona "Rechazar", _ENTONCES_ la reserva se cancela y la porción queda inmediatamente libre en la publicación.
+** *Escenario 3 (Camino condicional - Notificación al comprador):* _DADO_ que la cocinera confirma o rechaza el pedido, _CUANDO_ se efectúa la acción, _ENTONCES_ el comprador recibe un aviso instantáneo con la decisión tomada.
+
+================================================================================
+KEY: OC-29 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-13: Coordinación de Entrega entre Comprador y Cocinera
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador y Cocinera con reserva confirmada, queremos comunicarnos por un chat dentro de la aplicación, para acordar el punto exacto y la hora de entrega de la comida.
+* *Descripción:* Canal de mensajería directo habilitado exclusivamente cuando existe una reserva activa entre ambas partes. El chat pasa a solo lectura cuando la reserva queda completada.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que una reserva está en estado "Confirmado", _CUANDO_ el comprador o la cocinera abren la sección "Mensajes", _ENTONCES_ pueden enviar y recibir mensajes de texto para coordinar la entrega.
+** *Escenario 2 (Camino de error - Chat en reserva cancelada):* _DADO_ que la reserva es cancelada o rechazada, _CUANDO_ cualquiera de las partes intenta enviar un mensaje, _ENTONCES_ el sistema bloquea el campo de texto con la leyenda "Chat finalizado".
+** *Escenario 3 (Camino condicional - Mensajes no leídos):* _DADO_ que la cocinera envía un mensaje sobre el lugar de encuentro, _CUANDO_ el comprador no tiene la app abierta, _ENTONCES_ la interfaz resalta un indicador visual de mensaje pendiente.
+
+================================================================================
+KEY: OC-30 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-14: Visualización de Métodos de Pago Disponibles
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador, quiero visualizar los métodos de pago contra entrega aceptados (Efectivo, Nequi, Daviplata), para saber cómo cancelar el pedido directamente a la cocinera.
+* *Descripción:* Módulo de consulta de información sobre las modalidades de pago directo acordadas entre las partes.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que el comprador está en el resumen del pedido, _CUANDO_ consulta la sección de pago, _ENTONCES_ el sistema indica claramente que el dinero se entrega directamente a la cocinera en efectivo o transferencia acordada.
+** *Escenario 2 (Camino de error - Intento de pago en línea):* _DADO_ que un usuario busca una opción de pasarela de pago con tarjeta, _CUANDO_ revisa las opciones, _ENTONCES_ la plataforma muestra una nota aclaratoria: "OllaCercana no procesa dinero. El pago se realiza contra entrega".
+** *Escenario 3 (Camino condicional - Selección de método de preferencia):* _DADO_ que el comprador realiza la reserva, _CUANDO_ completa el formulario, _ENTONCES_ puede marcar opcionalmente con qué método tiene pensado pagar (Ej. "Efectivo exacto").
+
+================================================================================
+KEY: OC-31 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-15: Calificación del Intercambio Comunitario
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador o Cocinera, quiero evaluar la experiencia del intercambio asignando de 1 a 5 estrellas y un comentario, para construir un historial de reputación comunitaria.
+* *Descripción:* Formulario de evaluación del servicio y la comida una vez completada la entrega.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que un pedido fue marcado como "Entregado", _CUANDO_ el comprador o la cocinera ingresan a la sección "Historial", _ENTONCES_ se habilita la opción de seleccionar de 1 a 5 estrellas y enviar su opinión.
+** *Escenario 2 (Camino de error - Intento de calificar pedido no entregado):* _DADO_ que el pedido sigue en estado "Pendiente" o fue "Cancelado", _CUANDO_ el usuario busca calificar, _ENTONCES_ el sistema no muestra el formulario y señala "Solo se pueden calificar pedidos completados".
+** *Escenario 3 (Camino condicional - Calificación obligatoria):* _DADO_ que un usuario intenta enviar la reseña sin marcar la cantidad de estrellas, _CUANDO_ presiona enviar, _ENTONCES_ el sistema le exige seleccionar al menos una estrella.
+
+================================================================================
+KEY: OC-32 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-16: Sincronización en Tiempo Real de Porciones Disponibles
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador, quiero ver cómo se reduce la cantidad de porciones en tiempo real cuando otros vecinos reservan, para saber la disponibilidad exacta antes de pedir.
+* *Descripción:* Actualización dinámica de los contadores de inventario en la pantalla del usuario.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que dos compradores observan la misma tarjeta con 2 porciones, _CUANDO_ el primer comprador reserva 1 porción, _ENTONCES_ la pantalla del segundo comprador cambia automáticamente a "1 porción disponible" sin necesidad de recargar.
+** *Escenario 2 (Camino de error - Intento simultáneo sobre la última porción):* _DADO_ que queda 1 sola porción disponible y dos compradores presionan "Apartar" exactamente al mismo tiempo, _CUANDO_ el sistema procesa el primer intento, _ENTONCES_ el segundo comprador recibe la alerta "Lo sentimos, la última porción acaba de ser reservada".
+** *Escenario 3 (Camino condicional - Indicador de escasez):* _DADO_ que el stock de porciones cae a 1, _CUANDO_ el contador se actualiza, _ENTONCES_ la insignia cambia de color a rojo para alertar sobre la última unidad disponible.
+
+================================================================================
+KEY: OC-33 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-17: Recepción de Avisos del Estado de la Reserva y Mensajes
+--------------------------------------------------------------------------------
+* *Título:* Como Usuario, quiero recibir alertas instantáneas en mi pantalla cuando cambie el estado de mi reserva o reciba un mensaje nuevo, para reaccionar rápidamente.
+* *Descripción:* Sistema de avisos informativos sobre eventos importantes dentro de la plataforma.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que la cocinera confirma la reserva del comprador, _CUANDO_ la acción se registra, _ENTONCES_ el comprador recibe una alerta instantánea: "¡Tu pedido de Bandeja Paisa ha sido confirmado!".
+** *Escenario 2 (Camino condicional - Alerta de recordatorio de recogida):* _DADO_ que un pedido confirmado está próximo a la hora acordada, _CUANDO_ faltan 15 minutos, _ENTONCES_ el comprador recibe una notificación de recordatorio para acercarse al punto de entrega.
+** *Escenario 3 (Camino de error - Desactivación de alertas):* _DADO_ que el usuario desactiva los avisos en la pantalla de ajustes, _CUANDO_ ocurre un cambio de estado, _ENTONCES_ las alertas en pantalla no se despliegan pero la información queda almacenada en la pestaña "Notificaciones".
+
+================================================================================
+KEY: OC-34 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-18: Reportar Publicaciones o Usuarios por Incumplimiento
+--------------------------------------------------------------------------------
+* *Título:* Como Usuario, quiero enviar un reporte sobre una publicación o usuario que incumpla las normas, para alertar a la administración y mantener la seguridad comunitaria.
+* *Descripción:* Herramienta para que los vecinos informen sobre irregularidades, problemas con la comida o conductas inapropiadas.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que un comprador tiene una mala experiencia, _CUANDO_ selecciona "Reportar", elige una causa de la lista y redacta una breve explicación, _ENTONCES_ el sistema crea el caso y notifica que el reporte fue enviado con éxito.
+** *Escenario 2 (Camino de error - Envió de reporte sin motivo):* _DADO_ que el usuario intenta enviar un reporte sin seleccionar una razón de la lista, _CUANDO_ presiona "Enviar", _ENTONCES_ el sistema resalta el campo indicando "Debe seleccionar un motivo de reporte".
+** *Escenario 3 (Camino condicional - Adjuntar evidencias):* _DADO_ que el usuario desea adjuntar una foto del producto defectuoso, _CUANDO_ completa el reporte, _ENTONCES_ el sistema le permite subir una imagen de respaldo antes de finalizar.
+
+================================================================================
+KEY: OC-35 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-19: Gestión y Resolución de Reportes de la Comunidad
+--------------------------------------------------------------------------------
+* *Título:* Como Administrador, quiero revisar la lista de reportes y perfiles pausados, para tomar decisiones de sanción o reactivación según las normas.
+* *Descripción:* Centro de moderación donde el administrador gestiona reclamos, revisa disputas y reactiva cuentas.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que el administrador revisa un reporte justificado, _CUANDO_ selecciona "Inhabilitar publicación", _ENTONCES_ la oferta es retirada del sistema y se le notifica la causa al usuario emisor.
+** *Escenario 2 (Camino alternativo - Reactivación de perfil pausado):* _DADO_ que el administrador examina una cocinera pausada por la regla de baja calificación y encuentra justificada la falla, _CUANDO_ selecciona "Reactivar perfil", _ENTONCES_ la cocinera vuelve a tener habilitada la opción de publicar.
+** *Escenario 3 (Camino de error - Sin permisos de administrador):* _DADO_ que un comprador o cocinera intenta acceder al panel de moderación, _CUANDO_ ingresa la ruta, _ENTONCES_ el sistema deniega el acceso indicando "No tiene permisos para ver esta sección".
+
+================================================================================
+KEY: OC-36 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-20: Consulta de Resumen de Historial e Ingresos Referenciales
+--------------------------------------------------------------------------------
+* *Título:* Como Cocinera, quiero consultar mi historial de platos vendidos, el cálculo de mis ingresos referenciales y el plato más popular, para llevar un control de mis ventas caseras.
+* *Descripción:* Panel de consulta con métricas acumuladas y resumen de actividad gastronómica.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que la cocinera ingresa a la pestaña "Historial de ventas", _CUANDO_ carga la vista, _ENTONCES_ el sistema refleja el total acumulado en dinero referencial, el número de porciones entregadas y el plato con mayor número de pedidos.
+** *Escenario 2 (Camino de error - Historial sin ventas):* _DADO_ que una cocinera nueva no ha realizado su primera venta, _CUANDO_ entra al módulo, _ENTONCES_ la pantalla muestra un estado vacío con el mensaje "Aún no has registrado tu primera venta. ¡Publica un plato hoy!".
+** *Escenario 3 (Camino condicional - Detalle por pedido):* _DADO_ que la cocinera presiona sobre un pedido antiguo del historial, _CUANDO_ lo selecciona, _ENTONCES_ la interfaz despliega los detalles de la fecha, comprador, porciones y calificación obtenida.
+
+================================================================================
+KEY: OC-37 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-21: Participación en Retos Comunitarios e Insignias de Fidelidad
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador o Cocinera, quiero acumular rachas de interacción y ver si mi conjunto residencial obtuvo el sello "Olla Verde", para fomentar el consumo local sin desperdicios.
+* *Descripción:* Funcionalidades comunitarias para premiar a los conjuntos con cero desperdicios y a los compradores recurrentes.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz - Vecino Fiel):* _DADO_ que un comprador completa 3 reservas en un mismo mes con la misma cocinera, _CUANDO_ se efectúa la tercera entrega, _ENTONCES_ el sistema otorga automáticamente la insignia "Vecino Fiel" en su perfil.
+** *Escenario 2 (Camino feliz - Conjunto Olla Verde):* _DADO_ que un conjunto residencial logra comercializar el 100% de las porciones publicadas durante la semana, _CUANDO_ se realiza el balance semanal, _ENTONCES_ la app asigna la insignia "Conjunto Olla Verde" a las cocineras de ese sector durante los siguientes 7 días.
+** *Escenario 3 (Camino condicional - Reinicio de racha):* _DADO_ que pasa un mes sin que el comprador vuelva a pedir a la misma cocinera, _CUANDO_ inicia el siguiente período, _ENTONCES_ el contador de la racha para el sello "Vecino Fiel" se reinicia.
+
+================================================================================
+KEY: OC-38 | TYPE: Historia | SPRINT:  | ESTADO: Por hacer
+RESUMEN: HU-22: Consulta de Reputación e Historial de Reseñas de Cocinera
+--------------------------------------------------------------------------------
+* *Título:* Como Comprador, quiero consultar la calificación promedio y las opiniones de otros vecinos sobre una cocinera, para tomar una decisión informada y comprar con confianza.
+* *Descripción:* Visualización pública del historial de valoraciones en estrellas (1 a 5), recuento total de reseñas y comentarios recibidos por la cocinera tras sus intercambios completados.
+* *Criterios de Aceptación:*
+** *Escenario 1 (Camino feliz):* _DADO_ que un comprador explora la tarjeta de un plato o el perfil de una cocinera, _CUANDO_ selecciona el indicador de estrellas o el enlace de opiniones, _ENTONCES_ el sistema despliega el modal con la calificación promedio, el total de reseñas registradas y la lista con los comentarios más recientes dejados por los vecinos.
+** *Escenario 2 (Camino de error - Cocinera sin valoraciones):* _DADO_ que un comprador ingresa al perfil de una cocinera nueva que aún no ha completado intercambios, _CUANDO_ consulta la sección de reputación, _ENTONCES_ el sistema muestra la insignia _"Sin calificaciones aún"_ junto con el texto informativo _"Esta cocinera aún no registra opiniones de vecinos"_.
+** *Escenario 3 (Camino condicional - Distintivo de Cocinera Destacada):* _DADO_ que una cocinera acumula 50 o más reseñas positivas, _CUANDO_ el comprador consulta su reputación, _ENTONCES_ el sistema destaca visiblemente la insignia de _"Cocinera Destacada"_ y habilita filtros para organizar las opiniones por puntuación de estrellas.
+
+================================================================================
+KEY: OC-47 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-23: Confirmar Entrega y Cerrar Transaccion
+--------------------------------------------------------------------------------
+Formato:
+Como Comprador y Cocinera con reserva Confirmada, queremos confirmar la entrega y el pago contra entrega para cerrar la transacción, habilitar la calificación mutua y actualizar las métricas de la cocinera.
+
+Criterios de aceptación:
+
+* *Escenario 1 (Camino feliz):* DADO que la reserva está Confirmada y ambas partes están presentes, CUANDO comprador y cocinera confirman entrega y pago, ENTONCES la reserva pasa a COMPLETADA, el chat pasa a solo lectura y se habilitan las calificaciones.
+* *Escenario 2 (Error — una parte no confirma):* DADO que una parte confirma y la otra no responde, CUANDO pasan 24 horas, ENTONCES la reserva se completa automáticamente y se notifica a ambas partes.
+* *Escenario 3 (Condicional — reporte abierto):* DADO que existe un reporte Abierto sobre la reserva, CUANDO se intenta cerrar, ENTONCES el sistema bloquea el cierre hasta que moderación resuelva.
+* *Escenario 4 (Error — reserva no confirmada):* DADO que la reserva está Pendiente, Rechazada o Expirada, CUANDO se intenta marcar entrega, ENTONCES el sistema rechaza la acción.
+
+================================================================================
+KEY: OC-48 | TYPE: Historia | SPRINT: Sprint 2 - OllaCercana | ESTADO: Por hacer
+RESUMEN: HU-24: Actualizar Disponibilidad de Porciones
+--------------------------------------------------------------------------------
+Formato:
+
+Como cocinera, quiero ajustar manualmente las porciones de un plato publicado (aumentar, disminuir, marcar agotado) para maneter el inventario exacto.
+
+Criterios de aceptación:
+
+* *Escenario 1 (Camino feliz — aumentar):* DADO que el plato tiene 3 porciones totales, CUANDO la cocinera aumenta 2, ENTONCES el total pasa a 5 y las disponibles se recalculan.
+* *Escenario 2 (Error — reducción por debajo de comprometidas):* DADO que el plato tiene 3 porciones comprometidas, CUANDO la cocinera intenta dejar el total en 2, ENTONCES el sistema rechaza con el mensaje "Tienes N porciones reservadas".
+* *Escenario 3 (Condicional — marcar agotado):* DADO que la cocinera marca el plato como agotado, CUANDO confirma, ENTONCES las disponibles quedan en 0 y el plato pasa a AGOTADO sin cancelar reservas existentes.
+* *Escenario 4 (Concurrencia):* DADO que otra reserva cambió la versión del plato mientras la cocinera editaba, CUANDO guarda, ENTONCES el sistema rechaza y muestra los valores actualizados.

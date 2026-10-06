@@ -1,0 +1,149 @@
+=== ALL USER STORIES (HU-01 to HU-24) (24) ===
+
+
+==================================================
+[OC-17] HU-01: Registro de Cuenta en la Plataforma
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador o Cocinera
+
+==================================================
+[OC-18] HU-02: Inicio de Sesión de Usuario
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Usuario registrado
+
+==================================================
+[OC-19] HU-03: Configuración de Perfil de Cocinera y Conjunto Residencial
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+==================================================
+[OC-20] HU-04: Publicar Oferta de Comida Casera del Día
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+==================================================
+[OC-21] HU-05: Establecer Porciones Disponibles y Precio por Porción
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+==================================================
+[OC-22] HU-06: Consultar Platos Disponibles por Radio de Distancia
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+==================================================
+[OC-23] HU-07: Filtrar Platos por Tipo de Menú
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+==================================================
+[OC-24] HU-08: Filtrar Platos por Etiquetas Dietéticas
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador con necesidades dietéticas
+
+==================================================
+[OC-25] HU-09: Consultar Mapa Interactivo de Cocineras
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+==================================================
+[OC-26] HU-10: Ocultamiento de Dirección Exacta de la Cocinera
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+==================================================
+[OC-27] HU-11: Apartar Porciones de Comida Casera
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+==================================================
+[OC-28] HU-12: Aceptar o Rechazar Solicitudes de Reserva
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+==================================================
+[OC-29] HU-13: Coordinación de Entrega entre Comprador y Cocinera
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador y Cocinera con reserva confirmada
+
+==================================================
+[OC-30] HU-14: Visualización de Métodos de Pago Disponibles
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+==================================================
+[OC-31] HU-15: Calificación del Intercambio Comunitario
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador o Cocinera
+
+==================================================
+[OC-32] HU-16: Sincronización en Tiempo Real de Porciones Disponibles
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+==================================================
+[OC-33] HU-17: Recepción de Avisos del Estado de la Reserva y Mensajes
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Usuario
+
+==================================================
+[OC-34] HU-18: Reportar Publicaciones o Usuarios por Incumplimiento
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Usuario
+
+==================================================
+[OC-35] HU-19: Gestión y Resolución de Reportes de la Comunidad
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Administrador
+
+==================================================
+[OC-36] HU-20: Consulta de Resumen de Historial e Ingresos Referenciales
+Estado: Por hacer | Sprint: OC-39
+--------------------------------------------------
+* *Título:* Como Cocinera
+
+==================================================
+[OC-37] HU-21: Participación en Retos Comunitarios e Insignias de Fidelidad
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador o Cocinera
+
+==================================================
+[OC-38] HU-22: Consulta de Reputación e Historial de Reseñas de Cocinera
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+* *Título:* Como Comprador
+
+==================================================
+[OC-47] HU-23: Confirmar Entrega y Cerrar Transaccion
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+Formato:
+Como Comprador y Cocinera con reserva Confirmada
+
+==================================================
+[OC-48] HU-24: Actualizar Disponibilidad de Porciones
+Estado: Por hacer | Sprint: 
+--------------------------------------------------
+Formato:
+
+Como cocinera

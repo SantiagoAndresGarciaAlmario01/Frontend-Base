@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Outfit:wght@200;300;400;500;600;700;800&family=Patrick+Hand&family=Playfair+Display:ital,wght@0,400;1,400&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #000000;
+    --foreground: #f4f3ef;
+  }
+
+  body {
+    background-color: #000000;
+    color: #f4f3ef;
+    overflow-x: clip;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  html[data-text-size="large"] {
+    font-size: 18px;
+  }
+
+  html[data-text-size="standard"] {
+    font-size: 16px;
+  }
+
+  html[data-appearance="dark"] body {
+    background-color: #17130f;
+    color: #f4f3ef;
+  }
+
+  /* Los fondos animados son decorativos y compartidos por portada, mapa y
+     cuenta. Atenuarlos aplica el modo oscuro también fuera del Libretón. */
+  html[data-appearance="dark"] canvas {
+    filter: brightness(0.62);
+  }
+
+  /* Convierte en superficies nocturnas las fichas de papel, controles y
+     tarjetas claras presentes en las distintas secciones de la aplicación. */
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#efe0c2]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#e8d1a3]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#f7eddb]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#f5e9d2]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#fff7e9]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#fffaf1]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#f4e7ce]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#ead9ba]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#f2e5cc]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#FAF6F0]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#f3ecdf]"],
+  html[data-appearance="dark"] [data-theme-page][class*="bg-[#f3ecdf]"],
+  html[data-appearance="dark"] [data-theme-page][class*="bg-[#FAF6F0]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-white"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-stone-50"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-stone-100"],
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-stone-200"] {
+    background-color: #28221b !important;
+    border-color: #705a40 !important;
+  }
+
+  html[data-appearance="dark"] [data-theme-page] {
+    color: #f0e5d3 !important;
+  }
+
+  html[data-appearance="dark"] [data-theme-page] [class*="bg-[#dce4ce]"] {
+    background-color: #293724 !important;
+    border-color: #647a4e !important;
+  }
+
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#2b2117]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#30251c]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#38271c]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#493323]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#453321]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#5b4a38]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#594735]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#6a5037]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#80694d]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#42542e]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#52663d]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#304522]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-[#38502d]"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-stone-900"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-stone-800"],
+  html[data-appearance="dark"] [data-theme-page] [class*="text-stone-700"] {
+    color: #f0e5d3 !important;
+  }
+
+  html[data-appearance="dark"] [data-theme-background] {
+    filter: brightness(0.6);
+  }
+
+  html[data-appearance="dark"] [data-map-illustration] {
+    filter: brightness(0.72);
+  }
+
+  html[data-appearance="dark"] [role="switch"] span {
+    background-color: #fff !important;
+  }
+
+  html[data-reduce-motion="true"] *,
+  html[data-reduce-motion="true"] *::before,
+  html[data-reduce-motion="true"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Glassmorphic Pill Badges */
+.glass-pill-dark {
+  background: rgba(18, 16, 14, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+/* Custom Bouncing Cursor Keyframe */
+@keyframes hand-bounce-smooth {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+.animate-hand-bounce {
+  animation: hand-bounce-smooth 1.4s ease-in-out infinite;
+}
+
+/* Infinite Marquee Animations */
+@keyframes marquee-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.animate-marquee-left {
+  display: flex;
+  width: max-content;
+  animation: marquee-left 35s linear infinite;
+}
+
+.animate-marquee-left:hover {
+  animation-play-state: paused;
+}
+
+.animate-marquee-right {
+  display: flex;
+  width: max-content;
+  animation: marquee-right 35s linear infinite;
+}
+
+.animate-marquee-right:hover {
+  animation-play-state: paused;
+}

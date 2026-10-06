@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OllaCercana - Manual de Identidad de Marca</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Poppins:wght@400;500;600;700&family=Caveat:wght@500;600;700&family=Courier+New&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        olla: { DEFAULT: '#F0822D', deep: '#d97224', light: '#fce6d5' },
+                        cercana: { DEFAULT: '#62B869', deep: '#4a9c55', light: '#e0f0e1' },
+                        amarillo: { DEFAULT: '#F4C430', deep: '#c99a1e', light: '#fdf3d6' },
+                        terracota: { DEFAULT: '#C84B31', deep: '#a03c26' },
+                        cream: { DEFAULT: '#FAF3E7', dark: '#EFE0C2' },
+                        ink: { DEFAULT: '#2B2117', muted: '#5B4A38', light: '#8A7860' }
+                    },
+                    fontFamily: {
+                        display: ['Fraunces', 'serif'],
+                        body: ['Poppins', 'sans-serif'],
+                        accent: ['Caveat', 'cursive'],
+                        mono: ['"Courier New"', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f8f9fa; scroll-behavior: smooth; }
+        .slide { 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            padding: 4rem 2rem;
+            position: relative;
+            background-color: white;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        .slide-inner { max-width: 1100px; margin: 0 auto; width: 100%; }
+        
+        /* Torn paper edge for specific sections */
+        .torn-top {
+            clip-path: polygon(0% 10px, 5% 0px, 10% 10px, 15% 0px, 20% 10px, 25% 0px, 30% 10px, 35% 0px, 40% 10px, 45% 0px, 50% 10px, 55% 0px, 60% 10px, 65% 0px, 70% 10px, 75% 0px, 80% 10px, 85% 0px, 90% 10px, 95% 0px, 100% 10px, 100% 100%, 0% 100%);
+            padding-top: 3rem !important;
+        }
+        
+        .slide-number {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #F0822D;
+            margin-bottom: 0.5rem;
+        }
+        .slide-title {
+            font-family: 'Fraunces', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #2B2117;
+            margin-bottom: 3rem;
+            border-bottom: 3px solid #F0822D;
+            padding-bottom: 1rem;
+            display: inline-block;
+        }
+
+        /* Swatches */
+        .swatch { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .swatch-color { height: 120px; width: 100%; }
+        .swatch-info { padding: 1rem; background: #fff; border: 1px solid #e2e8f0; border-top: none; }
+        
+        /* Grid backgrounds */
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+        }
+
+        /* Navigation dots */
+        .nav-dots { position: fixed; right: 2rem; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 0.5rem; z-index: 50; }
+        .nav-dot { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s; }
+        .nav-dot:hover, .nav-dot.active { background: #F0822D; transform: scale(1.5); }
+    </style>
+</head>
+<body class="font-body text-ink antialiased">
+
+    <!-- Nav Dots -->
+    <div class="nav-dots hidden lg:flex">
+        <a href="#cover" class="nav-dot active" title="Portada"></a>
+        <a href="#content" class="nav-dot" title="Contenido"></a>
+        <a href="#concept" class="nav-dot" title="Concepto"></a>
+        <a href="#audience" class="nav-dot" title="Público"></a>
+        <a href="#values" class="nav-dot" title="Valores"></a>
+        <a href="#naming" class="nav-dot" title="Nombre y Eslogan"></a>
+        <a href="#colors" class="nav-dot" title="Colores"></a>
+        <a href="#typography" class="nav-dot" title="Tipografía"></a>
+        <a href="#buttons" class="nav-dot" title="Botones"></a>
+        <a href="#cards" class="nav-dot" title="Cards"></a>
+        <a href="#inputs" class="nav-dot" title="Inputs"></a>
+        <a href="#modes" class="nav-dot" title="Modos"></a>
+    </div>
+
+    <!-- 01. COVER -->
+    <section id="cover" class="slide bg-cream bg-grid items-center text-center">
+        <div class="slide-inner flex flex-col items-center justify-center">
+            <div class="w-48 h-48 bg-white rounded-full shadow-xl flex items-center justify-center mb-12 border-4 border-olla">
+                <svg class="w-24 h-24 text-olla" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    <!-- Abstract Olla Icon -->
+                    <circle cx="12" cy="12" r="10" stroke="currentColor"/>
+                    <path d="M8 10h8M8 14h8M12 6v12" stroke="currentColor"/>
+                </svg>
+            </div>
+            <h1 class="font-display text-7xl font-bold text-ink mb-4">OllaCercana</h1>
+            <h2 class="font-body text-2xl text-ink-muted tracking-widest uppercase mb-12">Manual de Identidad de Marca</h2>
+            <p class="font-mono text-ink-light">v2.0 · 2026</p>
+        </div>
+    </section>
+
+    <!-- 02. CONTENIDO -->
+    <section id="content" class="slide bg-white">
+        <div class="slide-inner flex gap-16 items-center">
+            <div class="flex-1">
+                <div class="slide-number">CONTENIDO</div>
+                <h2 class="slide-title">Manual de Identidad</h2>
+                
+                <ul class="space-y-4 font-body text-lg text-ink-muted">
+                    <li class="flex gap-4"><span class="text-amarillo font-bold">03</span> Nombre & Concepto de Marca</li>
+                    <li class="flex gap-4"><span class="text-amarillo font-bold">04</span> Público Objetivo</li>
+                    <li class="flex gap-4"><span class="text-amarillo font-bold">05</span> Valores & Filosofía de Marca</li>
+                    <li class="flex gap-4"><span class="text-amarillo font-bold">06</span> Nombre & Eslogan</li>
+                    <li class="flex gap-4"><span class="text-amarillo font-bold">07</span> Paleta de Colores</li>
+                    <li class="flex gap-4"><span class="text-amarillo font-bold">08</span> Tipografía</li>
+                    <li class="flex gap-4"><span class="text-amarillo font-bold">09</span> Elementos Visuales — Botones</li>
+                    <li class="flex gap-4"><span class="text-amarillo font-bold">10</span> Elementos Visuales — Cards & Badges</li>
+                    <li class="flex gap-4"><span class="text-amarillo font-bold">11</span> Elementos Visuales — Inputs y Formularios</li>
+                    <li class="flex gap-4"><span class="text-amarillo font-bold">12</span> Modo Oscuro vs Modo Claro</li>
+                </ul>
+            </div>
+            <div class="flex-1 bg-cream-dark p-12 rounded-[3rem] shadow-2xl relative overflow-hidden transform rotate-2">
+                <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 0, transparent 50%); background-size: 10px 10px;"></div>
+                <div class="relative z-10 text-center">
+                    <h1 class="font-accent text-6xl text-olla-deep font-bold mb-6">OllaCercana</h1>
+                    <p class="font-mono text-ink font-bold">Comunidad + Sabor</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 03. CONCEPTO -->
+    <section id="concept" class="slide bg-cream">
+        <div class="slide-inner">
+            <div class="slide-number">03</div>
+            <h2 class="slide-title">Nombre & Concepto de Marca</h2>
+            
+            <div class="flex gap-16 items-center">
+                <div class="w-2/5 bg-olla rounded-3xl p-12 text-center text-white shadow-xl relative">
+                    <div class="w-40 h-40 mx-auto bg-white rounded-full flex items-center justify-center mb-6 shadow-inner text-olla font-display text-5xl font-bold">OC</div>
+                    <h3 class="font-display text-3xl font-bold tracking-wider">OLLACERCANA</h3>
+                    <p class="font-mono text-sm opacity-80 mt-2 tracking-[0.2em] uppercase">Sabor de Barrio</p>
+                </div>
+                
+                <div class="w-3/5 space-y-6 text-lg">
+                    <div class="grid grid-cols-[150px_1fr] gap-4 border-b border-ink/10 pb-4">
+                        <span class="font-bold text-amarillo-deep">Nombre:</span>
+                        <span class="text-ink">OllaCercana</span>
+                    </div>
+                    <div class="grid grid-cols-[150px_1fr] gap-4 border-b border-ink/10 pb-4">
+                        <span class="font-bold text-amarillo-deep">Tipo:</span>
+                        <span class="text-ink">Plataforma web de economía colaborativa vecinal</span>
+                    </div>
+                    <div class="grid grid-cols-[150px_1fr] gap-4 border-b border-ink/10 pb-4">
+                        <span class="font-bold text-amarillo-deep">Versión:</span>
+                        <span class="text-ink">2026.2 · Activo</span>
+                    </div>
+                    <div class="grid grid-cols-[150px_1fr] gap-4 pb-4">
+                        <span class="font-bold text-amarillo-deep">Contexto:</span>
+                        <span class="text-ink leading-relaxed">Una plataforma diseñada para conectar a cocineras de barrio con vecinos que buscan comida casera auténtica. Fomenta la convivencia, apoya la economía local y revive la tradición de compartir la mesa.</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-12 bg-amarillo-light border-l-4 border-amarillo p-8 rounded-r-xl">
+                <p class="font-accent text-3xl text-ink-muted italic text-center">"Donde hay olla, hay hogar."</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 04. PÚBLICO -->
+    <section id="audience" class="slide bg-white">
+        <div class="slide-inner">
+            <div class="slide-number">04</div>
+            <h2 class="slide-title">Público Objetivo</h2>
+            
+            <div class="grid grid-cols-2 gap-12 mb-12">
+                <div>
+                    <h3 class="text-olla font-bold tracking-widest uppercase mb-6 text-sm">Usuarios Principales</h3>
+                    <div class="bg-white border-2 border-cream-dark p-8 rounded-2xl shadow-sm h-full">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 bg-olla-light text-olla rounded-full flex items-center justify-center">🍲</div>
+                            <h4 class="font-display text-2xl font-bold">Vecinos (Compradores)</h4>
+                        </div>
+                        <p class="text-ink-muted leading-relaxed">Personas que no tienen tiempo para cocinar pero extrañan el sabor auténtico de casa. Usan la app para descubrir platillos cercanos, reservar porciones y recogerlas de forma rápida y confiable.</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-amarillo-deep font-bold tracking-widest uppercase mb-6 text-sm">Usuarios Oferentes</h3>
+                    <div class="bg-white border-2 border-cream-dark p-8 rounded-2xl shadow-sm h-full">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 bg-amarillo-light text-amarillo-deep rounded-full flex items-center justify-center">👩🏽‍🍳</div>
+                            <h4 class="font-display text-2xl font-bold">Cocineras de Barrio</h4>
+                        </div>
+                        <p class="text-ink-muted leading-relaxed">Amas de casa o apasionadas por la cocina que preparan porciones extra de su comida diaria. Usan la app para publicar su menú, gestionar reservas y generar un ingreso extra sin salir de casa.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-cercana-deep font-bold tracking-widest uppercase mb-6 text-sm">Perfiles de Uso</h3>
+            <div class="grid grid-cols-3 gap-6">
+                <div class="bg-cercana-light p-6 rounded-xl">
+                    <div class="font-bold text-cercana-deep flex items-center gap-2 mb-2">🔍 Explorador de Menú</div>
+                    <p class="text-sm text-ink-muted">Busca por categorías, ve disponibilidad en tiempo real e interactúa con el mapa del barrio.</p>
+                </div>
+                <div class="bg-olla-light p-6 rounded-xl">
+                    <div class="font-bold text-olla-deep flex items-center gap-2 mb-2">📅 Gestor de Reservas</div>
+                    <p class="text-sm text-ink-muted">Publica platos, confirma solicitudes, gestiona su inventario de porciones y coordina entregas.</p>
+                </div>
+                <div class="bg-cream-dark/50 p-6 rounded-xl">
+                    <div class="font-bold text-ink-muted flex items-center gap-2 mb-2">⭐ Miembro Verificado</div>
+                    <p class="text-sm text-ink-muted">Mantiene un perfil de confianza con calificaciones, historial de pedidos y validación de identidad.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 05. VALORES -->
+    <section id="values" class="slide bg-cream">
+        <div class="slide-inner">
+            <div class="slide-number">05</div>
+            <h2 class="slide-title">Valores & Filosofía de Marca</h2>
+            
+            <div class="flex gap-12">
+                <div class="w-1/2 bg-white border border-cream-dark rounded-[2rem] p-10 shadow-lg">
+                    <h3 class="text-amarillo-deep font-bold tracking-widest uppercase mb-8 text-sm">Valores Fundamentales</h3>
+                    
+                    <ul class="space-y-8">
+                        <li>
+                            <h4 class="font-display text-xl font-bold text-ink mb-2 flex items-center gap-2"><span class="text-olla">●</span> Comunidad</h4>
+                            <p class="text-ink-muted text-sm leading-relaxed">Fomentamos la conexión vecinal, ayudando a que personas que viven cerca se conozcan y apoyen mutuamente.</p>
+                        </li>
+                        <li>
+                            <h4 class="font-display text-xl font-bold text-ink mb-2 flex items-center gap-2"><span class="text-cercana">●</span> Sabor Casero</h4>
+                            <p class="text-ink-muted text-sm leading-relaxed">Priorizamos lo auténtico y lo hecho en casa por encima de lo industrial o comercial. Comida con alma.</p>
+                        </li>
+                        <li>
+                            <h4 class="font-display text-xl font-bold text-ink mb-2 flex items-center gap-2"><span class="text-terracota">●</span> Confianza</h4>
+                            <p class="text-ink-muted text-sm leading-relaxed">La seguridad es clave. Verificamos a nuestros usuarios y mantenemos un sistema de reseñas transparente y respetuoso.</p>
+                        </li>
+                        <li>
+                            <h4 class="font-display text-xl font-bold text-ink mb-2 flex items-center gap-2"><span class="text-amarillo-deep">●</span> Autenticidad</h4>
+                            <p class="text-ink-muted text-sm leading-relaxed">Mostramos las cocinas tal como son: reales, cálidas y sin filtros artificiales.</p>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="w-1/2 bg-ink rounded-[2rem] p-10 text-white shadow-2xl relative overflow-hidden">
+                    <div class="absolute -right-20 -bottom-20 opacity-10">
+                        <svg width="300" height="300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                    </div>
+                    <h3 class="text-amarillo font-bold tracking-widest uppercase mb-8 text-sm relative z-10">Filosofía</h3>
+                    
+                    <div class="relative z-10 space-y-6 text-cream/90 text-sm leading-relaxed">
+                        <p>OllaCercana nace de una necesidad profunda: en las ciudades modernas vivimos rodeados de gente, pero comemos solos.</p>
+                        <p>Creemos que la comida de hogar tiene un poder curativo y unificador que los restaurantes de comida rápida no pueden ofrecer. Queremos revivir la época en que le tocabas la puerta a la vecina para pedirle un plato de sopa.</p>
+                        <p>La tecnología aquí no aísla; al contrario, actúa como un puente digital para facilitar un encuentro real y tangible en el mundo físico.</p>
+                        
+                        <div class="mt-12 pt-8 border-t border-white/20">
+                            <p class="font-accent text-4xl text-amarillo leading-tight">"Momentos que nutren,<br>platos que unen."</p>
+                            <p class="text-xs text-cream/50 mt-4 uppercase tracking-widest">Esencia de la marca</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 06. NOMBRE -->
+    <section id="naming" class="slide bg-white">
+        <div class="slide-inner">
+            <div class="slide-number">06</div>
+            <h2 class="slide-title">Nombre & Eslogan</h2>
+            
+            <div class="grid grid-cols-2 gap-16 items-center">
+                <div>
+                    <h3 class="text-amarillo-deep font-bold tracking-widest uppercase mb-6 text-sm">Nombre — OllaCercana</h3>
+                    <p class="text-ink-muted leading-relaxed mb-6">El nombre une dos conceptos poderosos: la <strong>Olla</strong>, símbolo universal de abundancia, hogar, cocina familiar y compartir; y <strong>Cercana</strong>, que apela a la proximidad física (el barrio) y emocional (la confianza).</p>
+                    
+                    <div class="bg-cream p-6 rounded-xl border border-cream-dark">
+                        <p class="text-sm text-ink-muted mb-4">Se escribe siempre en CamelCase o todo mayúsculas en logos, pero como una sola palabra. Nunca separado.</p>
+                        <div class="flex items-center gap-8">
+                            <div>
+                                <span class="text-xs font-bold text-cercana-deep uppercase tracking-widest block mb-1">Correcto</span>
+                                <span class="font-display text-2xl font-bold text-ink">OllaCercana</span>
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-terracota uppercase tracking-widest block mb-1">Incorrecto</span>
+                                <span class="font-display text-2xl font-bold text-ink/40 line-through">Olla Cercana</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-amarillo-deep font-bold tracking-widest uppercase mb-4 mt-12 text-sm">Eslogan</h3>
+                    <p class="font-accent text-4xl text-olla-deep mb-4">"El sabor de tu barrio, a un clic."</p>
+                    <p class="text-sm text-ink-muted">Un eslogan directo que comunica el valor (sabor de barrio) y la facilidad de la herramienta tecnológica (a un clic).</p>
+                </div>
+                
+                <div class="bg-ink p-12 rounded-3xl relative flex items-center justify-center min-h-[400px]">
+                    <!-- Simulated 3D Abuelita or Logo -->
+                    <div class="text-center">
+                        <div class="text-7xl mb-6">👵🏽🥘</div>
+                        <h2 class="font-display text-4xl text-cream font-bold">OllaCercana</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 07. COLORES -->
+    <section id="colors" class="slide bg-cream">
+        <div class="slide-inner">
+            <div class="slide-number">07</div>
+            <h2 class="slide-title">Paleta de Colores</h2>
+            
+            <h3 class="text-ink font-bold tracking-widest uppercase mb-6 text-sm border-b border-ink/10 pb-2">Colores Primarios — Cálidos & Hogareños</h3>
+            <div class="grid grid-cols-4 gap-6 mb-12">
+                <div class="swatch">
+                    <div class="swatch-color bg-olla"></div>
+                    <div class="swatch-info">
+                        <p class="font-bold text-ink">Naranja Olla</p>
+                        <p class="text-xs font-mono text-ink-muted mt-1">#F0822D</p>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color bg-cercana"></div>
+                    <div class="swatch-info">
+                        <p class="font-bold text-ink">Verde Cercana</p>
+                        <p class="text-xs font-mono text-ink-muted mt-1">#62B869</p>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color bg-amarillo"></div>
+                    <div class="swatch-info">
+                        <p class="font-bold text-ink">Amarillo Maíz</p>
+                        <p class="text-xs font-mono text-ink-muted mt-1">#F4C430</p>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color bg-terracota"></div>
+                    <div class="swatch-info">
+                        <p class="font-bold text-ink">Rojo Terracota</p>
+                        <p class="text-xs font-mono text-ink-muted mt-1">#C84B31</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-ink font-bold tracking-widest uppercase mb-6 text-sm border-b border-ink/10 pb-2">Superficies & Textos</h3>
+            <div class="grid grid-cols-4 gap-6">
+                <div class="swatch">
+                    <div class="swatch-color bg-cream border border-cream-dark"></div>
+                    <div class="swatch-info">
+                        <p class="font-bold text-ink">Crema (Fondo)</p>
+                        <p class="text-xs font-mono text-ink-muted mt-1">#FAF3E7</p>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color bg-cream-dark"></div>
+                    <div class="swatch-info">
+                        <p class="font-bold text-ink">Kraft (Cards)</p>
+                        <p class="text-xs font-mono text-ink-muted mt-1">#EFE0C2</p>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color bg-ink"></div>
+                    <div class="swatch-info">
+                        <p class="font-bold text-ink">Tinta (Texto)</p>
+                        <p class="text-xs font-mono text-ink-muted mt-1">#2B2117</p>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch-color bg-[#5B4A38]"></div>
+                    <div class="swatch-info">
+                        <p class="font-bold text-ink">Tinta Suave</p>
+                        <p class="text-xs font-mono text-ink-muted mt-1">#5B4A38</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 08. TIPOGRAFÍA -->
+    <section id="typography" class="slide bg-white">
+        <div class="slide-inner">
+            <div class="slide-number">08</div>
+            <h2 class="slide-title">Tipografía</h2>
+            
+            <div class="flex gap-16">
+                <div class="w-1/2 bg-ink text-white rounded-3xl p-12">
+                    <div class="text-[8rem] font-display leading-none mb-4">Aa</div>
+                    <h3 class="text-3xl font-display font-bold mb-8">Fraunces</h3>
+                    <p class="text-sm text-cream/70 uppercase tracking-widest mb-6">Fuente Principal (Títulos)</p>
+                    <p class="font-display text-lg leading-relaxed opacity-90">A B C D E F G H I J K L M N O P Q R S T U V W X Y Z<br>a b c d e f g h i j k l m n o p q r s t u v w x y z<br>0 1 2 3 4 5 6 7 8 9</p>
+                </div>
+                
+                <div class="w-1/2 space-y-10">
+                    <div>
+                        <h4 class="font-display text-4xl font-bold text-ink mb-1">H1 — Título Principal</h4>
+                        <p class="text-sm font-mono text-ink-muted">Fraunces · Bold · 36px/4rem</p>
+                    </div>
+                    <div>
+                        <h4 class="font-display text-2xl font-bold text-ink mb-1">H2 — Subtítulo</h4>
+                        <p class="text-sm font-mono text-ink-muted">Fraunces · SemiBold · 24px/1.5rem</p>
+                    </div>
+                    <div>
+                        <h4 class="font-body text-xl font-bold text-ink mb-1">H3 — Header de Sección</h4>
+                        <p class="text-sm font-mono text-ink-muted">Poppins · Bold · 20px</p>
+                    </div>
+                    <div>
+                        <h4 class="font-body text-base text-ink mb-1 leading-relaxed">Body — Texto principal que se usa en párrafos, descripciones de platos y contenido extenso. Debe ser altamente legible.</h4>
+                        <p class="text-sm font-mono text-ink-muted">Poppins · Regular · 16px · Line Height 1.6</p>
+                    </div>
+                    <div>
+                        <h4 class="font-accent text-3xl text-olla-deep mb-1">Acentos — Detalles que parecen escritos a mano.</h4>
+                        <p class="text-sm font-mono text-ink-muted">Caveat · Bold · Varios tamaños</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 09. BOTONES -->
+    <section id="buttons" class="slide bg-cream">
+        <div class="slide-inner">
+            <div class="slide-number">09</div>
+            <h2 class="slide-title">Elementos Visuales — Botones</h2>
+            
+            <div class="grid grid-cols-3 gap-8 mb-16">
+                <div class="flex flex-col items-center justify-center p-8 bg-white rounded-2xl border border-cream-dark">
+                    <button class="bg-olla text-white font-body font-bold py-3 px-8 rounded-full shadow-[0_4px_14px_0_rgba(240,130,45,0.39)] hover:bg-olla-deep transition-all">Reservar Plato</button>
+                    <p class="mt-6 text-xs font-bold text-ink-muted uppercase tracking-widest">Primario</p>
+                </div>
+                <div class="flex flex-col items-center justify-center p-8 bg-white rounded-2xl border border-cream-dark">
+                    <button class="bg-white text-ink font-body font-bold py-3 px-8 rounded-full border-2 border-cream-dark hover:border-ink transition-all">Ver Menú</button>
+                    <p class="mt-6 text-xs font-bold text-ink-muted uppercase tracking-widest">Secundario</p>
+                </div>
+                <div class="flex flex-col items-center justify-center p-8 bg-ink rounded-2xl">
+                    <button class="bg-transparent text-white font-body font-bold py-3 px-8 rounded-full border-2 border-white/20 hover:bg-white/10 transition-all">Iniciar Sesión</button>
+                    <p class="mt-6 text-xs font-bold text-white/50 uppercase tracking-widest">Dark Mode / Overlays</p>
+                </div>
+            </div>
+
+            <h3 class="text-ink font-bold tracking-widest uppercase mb-6 text-sm border-b border-ink/10 pb-2">Estados Especiales & Roles</h3>
+            <div class="flex gap-6 flex-wrap">
+                <button class="bg-cercana text-white font-body font-bold py-2 px-6 rounded-lg shadow-sm">Confirmado</button>
+                <button class="bg-terracota text-white font-body font-bold py-2 px-6 rounded-lg shadow-sm">Rechazado</button>
+                <button class="bg-amarillo text-ink font-body font-bold py-2 px-6 rounded-lg shadow-sm">Pendiente</button>
+                <button class="bg-gray-200 text-gray-500 font-body font-bold py-2 px-6 rounded-lg cursor-not-allowed">Agotado</button>
+                
+                <div class="w-px h-10 bg-ink/20 mx-4"></div>
+                
+                <span class="inline-flex items-center gap-2 bg-olla-light border border-olla text-olla-deep px-4 py-2 rounded-full font-bold text-xs uppercase"><span class="w-2 h-2 rounded-full bg-olla"></span> Cocinera</span>
+                <span class="inline-flex items-center gap-2 bg-cercana-light border border-cercana text-cercana-deep px-4 py-2 rounded-full font-bold text-xs uppercase"><span class="w-2 h-2 rounded-full bg-cercana"></span> Comprador</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 10. CARDS -->
+    <section id="cards" class="slide bg-white">
+        <div class="slide-inner">
+            <div class="slide-number">10</div>
+            <h2 class="slide-title">Elementos Visuales — Cards & Badges</h2>
+            
+            <div class="grid grid-cols-2 gap-12">
+                <!-- Card de Plato -->
+                <div>
+                    <h3 class="text-ink-muted font-bold tracking-widest uppercase mb-4 text-xs">Card de Plato (Scrapbook Style)</h3>
+                    <div class="bg-cream-dark p-6 rounded-lg shadow-md transform -rotate-1 relative max-w-sm border border-[#D8C39C]">
+                        <!-- Tape -->
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-white/60 -rotate-2 shadow-sm"></div>
+                        
+                        <div class="aspect-video bg-gray-300 rounded overflow-hidden mb-4 relative">
+                            <div class="absolute top-2 left-2 bg-amarillo text-ink text-xs font-bold px-2 py-1 rounded">HOY</div>
+                            <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&q=80&w=400" class="w-full h-full object-cover" alt="Plato">
+                        </div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-display font-bold text-xl text-ink">Bandeja Paisa</h4>
+                            <span class="font-accent text-xl text-olla-deep font-bold">$15k</span>
+                        </div>
+                        <p class="text-xs text-ink-muted mb-4 font-mono">Por Doña Rosa • A 3 cuadras</p>
+                        <button class="w-full bg-ink text-white font-bold py-2 rounded">Reservar (2 disp.)</button>
+                    </div>
+                </div>
+
+                <!-- Chalkboard Badge / Element -->
+                <div>
+                    <h3 class="text-ink-muted font-bold tracking-widest uppercase mb-4 text-xs">Menú Pizarra (Chalkboard)</h3>
+                    <div class="bg-[#26332A] border-[8px] border-[#5C3A1E] rounded-xl p-6 shadow-xl max-w-sm relative">
+                        <div class="font-accent text-3xl text-[#F5F1E4] border-b-2 border-dashed border-[#3C4C40] pb-2 mb-4">Menú de Hoy</div>
+                        
+                        <div class="flex justify-between items-baseline mb-2">
+                            <span class="font-accent text-xl text-[#F5F1E4]">Sopa de Lentejas</span>
+                            <span class="font-accent text-xl text-amarillo font-bold">$8k</span>
+                        </div>
+                        <div class="flex justify-between items-baseline mb-2">
+                            <span class="font-accent text-xl text-[#F5F1E4]">Pollo Guisado</span>
+                            <span class="font-accent text-xl text-amarillo font-bold">$12k</span>
+                        </div>
+                        <p class="text-[#C9CFC6] text-xs font-body mt-4 text-center">Incluye jugo de mora</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 11. INPUTS -->
+    <section id="inputs" class="slide bg-cream">
+        <div class="slide-inner">
+            <div class="slide-number">11</div>
+            <h2 class="slide-title">Elementos Visuales — Inputs y Formularios</h2>
+            
+            <div class="bg-white p-12 rounded-3xl border border-cream-dark shadow-sm max-w-3xl">
+                <div class="space-y-8">
+                    <div>
+                        <label class="block font-body text-sm font-bold text-ink mb-2">Correo Electrónico</label>
+                        <input type="email" value="vecino@barrio.com" class="w-full bg-[#FBF3E7] border-2 border-[#D9B68C] rounded-xl px-4 py-3 font-mono text-ink focus:outline-none focus:border-olla transition-colors" readonly>
+                        <p class="text-xs text-ink-muted mt-2">Input standard con fondo crema para mantener la calidez.</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block font-body text-sm font-bold text-ink mb-2">Contraseña</label>
+                        <input type="password" value="••••••••" class="w-full bg-[#FBF3E7] border-2 border-cercana rounded-xl px-4 py-3 font-mono text-ink focus:outline-none" readonly>
+                        <p class="text-xs text-cercana-deep mt-2 font-bold">Estado de Éxito / Valido</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-body text-sm font-bold text-ink mb-2">Teléfono / WhatsApp</label>
+                        <input type="text" value="300" class="w-full bg-white border-2 border-terracota rounded-xl px-4 py-3 font-mono text-terracota focus:outline-none" readonly>
+                        <p class="text-xs text-terracota-deep mt-2 font-bold">Estado de Error (Faltan números)</p>
+                    </div>
+
+                    <div>
+                        <label class="block font-body text-sm font-bold text-ink mb-2">Mensaje para la cocinera</label>
+                        <textarea rows="3" class="w-full bg-[#FBF3E7] border-2 border-[#D9B68C] rounded-xl px-4 py-3 font-mono text-ink focus:outline-none resize-none" placeholder="Escribe aquí si quieres sin cebolla..." readonly></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 12. MODOS -->
+    <section id="modes" class="slide bg-white">
+        <div class="slide-inner">
+            <div class="slide-number">12</div>
+            <h2 class="slide-title">Tema Diario vs Tema Nocturno</h2>
+            <p class="text-ink-muted mb-8 max-w-2xl">En lugar de "Modo Claro / Oscuro", OllaCercana usa conceptos de "Almuerzo" (Día) y "Cena" (Noche), adaptando los tonos a la iluminación del hogar.</p>
+            
+            <div class="grid grid-cols-2 gap-8">
+                <!-- Modo Claro -->
+                <div class="bg-cream rounded-2xl p-8 border border-cream-dark h-[400px] flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-olla uppercase tracking-widest text-xs mb-2">Tema Almuerzo (Claro)</h3>
+                        <div class="font-display text-3xl font-bold text-ink">¡Buenos días!</div>
+                        <p class="text-ink-muted mt-2">Fondos crema, textos oscuros. Sensación de frescura y luz de día.</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-cream-dark shadow-sm">
+                        <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                        <div class="h-4 bg-gray-100 rounded w-3/4"></div>
+                    </div>
+                </div>
+
+                <!-- Modo Oscuro -->
+                <div class="bg-ink rounded-2xl p-8 border border-ink-muted h-[400px] flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-amarillo uppercase tracking-widest text-xs mb-2">Tema Cena (Oscuro)</h3>
+                        <div class="font-display text-3xl font-bold text-cream">Buenas noches 🌙</div>
+                        <p class="text-cream/70 mt-2">Fondos oscuros (Ink), textos claros (Cream). Sensación íntima y cálida para revisar reservas en la noche.</p>
+                    </div>
+                    <div class="bg-[#3A2D20] p-4 rounded-xl border border-[#4A3A2A] shadow-sm">
+                        <div class="h-4 bg-[#5A4A3A] rounded w-1/2 mb-2"></div>
+                        <div class="h-4 bg-[#4A3A2A] rounded w-3/4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Simple script for nav dots highlight on scroll
+        const sections = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.nav-dot');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= (sectionTop - sectionHeight / 3)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            dots.forEach(dot => {
+                dot.classList.remove('active');
+                if (dot.getAttribute('href').includes(current)) {
+                    dot.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

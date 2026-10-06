@@ -1,0 +1,546 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import BrandLogo from "@/components/BrandLogo";
+import AnimatedKitchenBackground from "@/components/AnimatedKitchenBackground";
+import AccountNav from "@/components/AccountNav";
+import ChatModal from "@/components/modals/ChatModal";
+import { getStoredReservations, getStoredNotifications } from "@/lib/ollacercana-store";
+import {
+  Clock,
+  CheckCircle2,
+  Star,
+  PlusCircle,
+  RotateCcw,
+  MessageSquare,
+  ShoppingBag,
+  HelpCircle,
+  Home,
+} from "lucide-react";
+
+interface UserProfile {
+  name: string;
+  email: string;
+  phone: string;
+  phoneVerified?: boolean;
+  role: "comprador" | "cocinera" | "admin";
+  commercialName?: string;
+  bio?: string;
+  residentialComplex?: string;
+  paymentMethods: string[];
+  isLoggedIn: boolean;
+  avatar?: string;
+  kitchenPhoto?: string;
+  isCocineraActive?: boolean;
+  dataConsentAccepted?: boolean;
+  isPaused?: boolean;
+}
+
+interface Reservation {
+  id: string;
+  dish: string;
+  quantity: number;
+  buyerName: string;
+  buyerPhone: string;
+  paymentMethod: string;
+  price: string;
+  status: "pending" | "confirmed" | "rejected" | "closed";
+  rejectionReason?: string;
+  rejectionComment?: string;
+  expiresAt: number;
+  createdTimestamp: number;
+  cocineraConfirmedDelivery: boolean;
+  cocineraConfirmedPayment: boolean;
+  cocineraClosedAt?: number;
+  compradorClosedAt?: number;
+  isAutoClosed?: boolean;
+  rated?: boolean;
+  cookName?: string;
+  pickupTime?: string;
+}
+
+function homeForRole(role: UserProfile["role"]): string {
+  if (role === "cocinera") return "/cuenta/cocina";
+  if (role === "admin") return "/cuenta/admin";
+  return "/menu";
+}
+
+const getDefaultReservations = (): Reservation[] => [
+  {
+    id: "RES-101",
+    dish: "Guiso Tradicional en Cazuela",
+    cookName: "Doña Elena",
+    quantity: 2,
+    buyerName: "Carlos Rodríguez",
+    buyerPhone: "3104567890",
+    paymentMethod: "Nequi",
+    price: "$34.000",
+    status: "pending",
+    expiresAt: Date.now() + 10 * 60 * 1000 - 15000,
+    createdTimestamp: Date.now() - 15000,
+    cocineraConfirmedDelivery: false,
+    cocineraConfirmedPayment: false,
+  },
+  {
+    id: "RES-102",
+    dish: "Empanadas Artesanales",
+    cookName: "Doña Rosa",
+    quantity: 4,
+    buyerName: "María Fernanda Gómez",
+    buyerPhone: "3159876543",
+    paymentMethod: "Efectivo",
+    price: "$24.000",
+    status: "confirmed",
+    expiresAt: Date.now() + 600000,
+    createdTimestamp: Date.now() - 3600000,
+    cocineraConfirmedDelivery: false,
+    cocineraConfirmedPayment: false,
+  },
+];
+
+export default function ReservasPage() {
+  const router = useRouter();
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const [compradorSubTab, setCompradorSubTab] = useState<"activas" | "historial">("activas");
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [activeChatReservationId, setActiveChatReservationId] = useState<string | null>(null);
+  const [ratingResId, setRatingResId] = useState<string | null>(null);
+  const [ratingStars, setRatingStars] = useState(5);
+
+  useEffect(() => {
+    const savedUserJson = localStorage.getItem("ollacercana_user");
+    if (!savedUserJson) {
+      router.push("/cuenta");
+      return;
+    }
+    let parsed: UserProfile;
+    try {
+      parsed = JSON.parse(savedUserJson);
+      if (!parsed.isLoggedIn) {
+        router.push("/cuenta");
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+      router.push("/cuenta");
+      return;
+    }
+
+    if (parsed.role !== "comprador") {
+      router.push(homeForRole(parsed.role));
+      return;
+    }
+
+    setUser(parsed);
+
+    const savedResJson = localStorage.getItem("ollacercana_reservations");
+    let loadedRes: Reservation[] = [];
+    if (savedResJson) {
+      try {
+        loadedRes = JSON.parse(savedResJson);
+      } catch (e) {
+        loadedRes = getDefaultReservations();
+      }
+    } else {
+      loadedRes = getDefaultReservations();
+    }
+
+    try {
+      const storeV2 = getStoredReservations();
+      storeV2.forEach((sr) => {
+        if (!loadedRes.some((r) => r.id === sr.id)) {
+          loadedRes.unshift({
+            id: sr.id,
+            dish: sr.dishName,
+            cookName: sr.cookName || "Doña Rosa",
+            quantity: sr.portions,
+            buyerName: sr.buyerName,
+            buyerPhone: "3001234567",
+            paymentMethod: sr.preferredPaymentMethod,
+            price: `$${sr.totalPrice.toLocaleString("es-CO")}`,
+            status:
+              sr.status === "PENDIENTE"
+                ? "pending"
+                : sr.status === "CONFIRMADO"
+                ? "confirmed"
+                : sr.status === "RECHAZADA"
+                ? "rejected"
+                : "closed",
+            expiresAt: new Date(sr.expiresAt).getTime(),
+            createdTimestamp: new Date(sr.createdAt).getTime(),
+            cocineraConfirmedDelivery: !!sr.cookConfirmedDelivery,
+            cocineraConfirmedPayment: false,
+            pickupTime: sr.pickupTime,
+          });
+        }
+      });
+    } catch (e) {
+      console.error(e);
+    }
+
+    setReservations(loadedRes);
+
+    try {
+      setUnreadCount(getStoredNotifications().filter((n) => !n.read).length);
+    } catch (e) {
+      console.error(e);
+    }
+
+    setCheckingSession(false);
+  }, [router]);
+
+  // Timer Ticks (24h auto-close)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setReservations((prev) => {
+        let changed = false;
+        const updated = prev.map((res) => {
+          if (res.status === "confirmed" && (res.cocineraConfirmedDelivery || res.compradorClosedAt)) {
+            const ageHours = (Date.now() - res.createdTimestamp) / (1000 * 3600);
+            if (ageHours >= 24 && !res.isAutoClosed) {
+              changed = true;
+              return { ...res, status: "closed" as const, isAutoClosed: true };
+            }
+          }
+          return res;
+        });
+        if (changed) {
+          localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+        }
+        return updated;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const getRemainingTime = (expiresAt: number) => {
+    const diff = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+    const m = Math.floor(diff / 60);
+    const s = diff % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
+
+  const handleSimulateCompradorConfirm = (resId: string) => {
+    const updated = reservations.map((r) => {
+      if (r.id === resId) {
+        const compradorTimestamp = Date.now();
+        const fullyClosed = !!r.cocineraClosedAt;
+        return {
+          ...r,
+          compradorClosedAt: compradorTimestamp,
+          status: fullyClosed ? ("closed" as const) : ("confirmed" as const),
+        };
+      }
+      return r;
+    });
+    setReservations(updated);
+    localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+  };
+
+  const handleRatingSubmit = () => {
+    if (!ratingResId) return;
+    const updated = reservations.map((r) => (r.id === ratingResId ? { ...r, rated: true } : r));
+    setReservations(updated);
+    localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+    setRatingResId(null);
+  };
+
+  if (checkingSession || !user) {
+    return (
+      <main className="relative min-h-screen w-full bg-[#14110f] flex items-center justify-center">
+        <p className="text-stone-400 text-sm font-semibold">Cargando...</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="relative min-h-screen w-full bg-[#14110f] text-[#f4efe6] font-['Outfit',sans-serif] overflow-x-hidden flex flex-col justify-between selection:bg-[#F0822D] selection:text-white">
+      <AnimatedKitchenBackground />
+
+      <header className="relative z-10 w-full pt-10 pb-6 px-6 flex flex-col items-center justify-center text-center">
+        <Link href="/" className="cursor-pointer group transition-transform hover:scale-105">
+          <BrandLogo size="lg" showTagline={true} taglineColor="text-stone-200 drop-shadow-md" />
+        </Link>
+      </header>
+
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col items-center justify-center">
+        <div className="w-full max-w-4xl bg-black/75 backdrop-blur-xl border border-white/20 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 my-6">
+          <AccountNav user={user} current="reservas" unreadCount={unreadCount} />
+
+          <div className="space-y-6 text-left">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#131F18] border border-emerald-600/30 rounded-2xl p-4 shadow-md">
+              <div>
+                <h4 className="text-sm font-bold text-emerald-300 flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-emerald-400" />
+                  <span>Mis Reservas y Pedidos Realizados</span>
+                </h4>
+                <p className="text-xs text-stone-300">
+                  Gestiona tus reservas activas en tiempo real o revisa tu historial para volver a pedir tus platos favoritos.
+                </p>
+              </div>
+              <Link
+                href="/menu"
+                className="px-4 py-2 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Hacer Nuevo Pedido</span>
+              </Link>
+            </div>
+
+            {/* Sub-tabs: Reservas Activas vs Historial de Reservas */}
+            <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+              <button
+                onClick={() => setCompradorSubTab("activas")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  compradorSubTab === "activas"
+                    ? "bg-[#62B869] text-white shadow"
+                    : "bg-black/40 border border-white/10 text-stone-400 hover:text-white"
+                }`}
+              >
+                Reservas Activas ({reservations.filter((r) => r.status === "pending" || r.status === "confirmed").length})
+              </button>
+              <button
+                onClick={() => setCompradorSubTab("historial")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  compradorSubTab === "historial"
+                    ? "bg-amber-600 text-white shadow"
+                    : "bg-black/40 border border-white/10 text-stone-400 hover:text-white"
+                }`}
+              >
+                Historial y Volver a Pedir ({reservations.filter((r) => r.status === "closed" || r.status === "rejected").length})
+              </button>
+            </div>
+
+            {reservations.length === 0 ? (
+              <div className="p-10 rounded-2xl bg-black/60 border border-white/10 text-center space-y-4">
+                <div className="w-12 h-12 rounded-full bg-stone-800 flex items-center justify-center mx-auto text-stone-400">
+                  <ShoppingBag className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h5 className="text-base font-bold text-white">No tienes reservas registradas</h5>
+                  <p className="text-xs text-stone-400 max-w-sm mx-auto">
+                    Explora El Libretón de platos caseros preparados hoy por tus vecinas.
+                  </p>
+                </div>
+                <Link
+                  href="/menu"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs transition-all shadow-lg"
+                >
+                  <span>Ir a El Libretón</span>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reservations
+                  .filter((res) =>
+                    compradorSubTab === "activas"
+                      ? res.status === "pending" || res.status === "confirmed"
+                      : res.status === "closed" || res.status === "rejected"
+                  )
+                  .map((res) => (
+                    <div
+                      key={res.id}
+                      className="p-5 rounded-2xl bg-black/60 border border-white/10 space-y-4 shadow-lg hover:border-white/20 transition-all"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono text-[#F0822D] font-bold">{res.id}</span>
+                            <span className="text-xs text-stone-400">
+                              | Cocinera: <strong className="text-amber-300">{res.cookName || "Doña Elena"}</strong>
+                            </span>
+                          </div>
+                          <h5 className="text-base font-bold text-white mt-0.5">{res.dish}</h5>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {res.status === "pending" && (
+                            <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5" />
+                              Quedan: {getRemainingTime(res.expiresAt)}
+                            </span>
+                          )}
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                              res.status === "pending"
+                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                : res.status === "confirmed"
+                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                : res.status === "closed"
+                                ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
+                                : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                            }`}
+                          >
+                            {res.status === "pending"
+                              ? "En Espera"
+                              : res.status === "confirmed"
+                              ? "Confirmado"
+                              : res.status === "closed"
+                              ? "Completado"
+                              : "Rechazado"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-stone-300">
+                        <div>
+                          <span className="text-stone-500 block text-[10px] uppercase">Cantidad</span>
+                          <span className="font-semibold text-white">{res.quantity} porción(es)</span>
+                        </div>
+                        <div>
+                          <span className="text-stone-500 block text-[10px] uppercase">Medio de Pago</span>
+                          <span className="font-semibold text-amber-300">{res.paymentMethod}</span>
+                        </div>
+                        <div>
+                          <span className="text-stone-500 block text-[10px] uppercase">Recogida Est.</span>
+                          <span className="font-semibold text-white">{res.pickupTime || "15-20 min"}</span>
+                        </div>
+                        <div>
+                          <span className="text-stone-500 block text-[10px] uppercase">Total</span>
+                          <span className="font-bold text-[#F0822D]">{res.price}</span>
+                        </div>
+                      </div>
+
+                      {res.status === "rejected" && (
+                        <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-200 text-xs">
+                          <strong>Motivo de rechazo:</strong> {res.rejectionReason || "Sin porciones disponibles"}
+                          {res.rejectionComment && <p className="text-[11px] text-rose-300 italic mt-1">"{res.rejectionComment}"</p>}
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
+                        <button
+                          onClick={() => setActiveChatReservationId(res.id)}
+                          className="px-4 py-2 rounded-xl bg-stone-900 border border-white/15 hover:border-[#F0822D] text-stone-200 hover:text-white text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
+                        >
+                          <MessageSquare className="w-4 h-4 text-[#F0822D]" />
+                          <span>Abrir Chat con Cocinera</span>
+                        </button>
+
+                        {compradorSubTab === "historial" && (
+                          <Link
+                            href="/menu"
+                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#F0822D] to-[#E06F1A] hover:brightness-110 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow cursor-pointer"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>Volver a Pedir</span>
+                          </Link>
+                        )}
+
+                        {res.status === "confirmed" && !res.compradorClosedAt && (
+                          <button
+                            onClick={() => handleSimulateCompradorConfirm(res.id)}
+                            className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Confirmar Recepción y Cierre</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {res.status === "confirmed" && res.compradorClosedAt && !res.cocineraClosedAt && (
+                        <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Confirmación pendiente por la cocinera.</span>
+                        </div>
+                      )}
+
+                      {res.status === "closed" && (
+                        <div className="p-3 rounded-xl bg-sky-950/60 border border-sky-500/40 flex items-center justify-between text-xs text-sky-200">
+                          <span className="flex items-center gap-2 font-semibold">
+                            <CheckCircle2 className="w-4 h-4 text-sky-400" />
+                            Transacción completada {res.isAutoClosed ? "(Cierre automático por 24h)" : ""}
+                          </span>
+
+                          {!res.rated ? (
+                            <button
+                              onClick={() => setRatingResId(res.id)}
+                              className="px-4 py-1.5 rounded-lg bg-sky-400 hover:bg-sky-300 text-black font-bold text-xs transition-colors cursor-pointer"
+                            >
+                              Calificar
+                            </button>
+                          ) : (
+                            <span className="text-amber-300 font-mono">★ Calificado</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <footer className="relative z-10 w-full px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 bg-black/40 backdrop-blur-md">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-stone-400 hover:text-white transition-colors"
+        >
+          <Home className="w-4 h-4 text-[#F0822D]" />
+          <span>Volver a OllaCercana</span>
+        </Link>
+
+        <div className="flex flex-wrap items-center justify-end gap-6 text-xs font-bold tracking-widest uppercase text-stone-300">
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              alert("Centro de Ayuda OllaCercana: Soporte para cocineras y compradores vecinales.");
+            }}
+            className="hover:text-white flex items-center gap-2 transition-colors"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-stone-400" />
+            <span>Ayuda</span>
+          </a>
+
+          <span className="text-[11px] text-stone-500 font-mono tracking-normal">v2.4</span>
+        </div>
+      </footer>
+
+      {ratingResId && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-sm w-full bg-[#1A1C1E] border border-sky-500/40 rounded-3xl p-6 shadow-2xl text-center space-y-4">
+            <h4 className="text-base font-bold text-white">Calificar Transacción</h4>
+            <p className="text-xs text-stone-300">¿Cómo fue la experiencia del pedido {ratingResId}?</p>
+
+            <div className="flex items-center justify-center gap-2 my-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRatingStars(star)}
+                  className="p-1 text-amber-400 hover:scale-125 transition-transform"
+                >
+                  <Star className={`w-7 h-7 ${star <= ratingStars ? "fill-amber-400" : "text-stone-700"}`} />
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleRatingSubmit}
+              className="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold text-xs"
+            >
+              Guardar Calificación
+            </button>
+          </div>
+        </div>
+      )}
+
+      {user && (
+        <ChatModal
+          isOpen={!!activeChatReservationId}
+          onClose={() => setActiveChatReservationId(null)}
+          reservationId={activeChatReservationId}
+          currentUser={user}
+          onOpenRatingModal={(resId) => setRatingResId(resId)}
+        />
+      )}
+    </main>
+  );
+}
