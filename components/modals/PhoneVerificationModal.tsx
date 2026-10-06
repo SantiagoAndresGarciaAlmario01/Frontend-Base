@@ -51,7 +51,7 @@ export default function PhoneVerificationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn">
-      <div className="bg-[#1A261D] border border-amber-600/30 text-amber-100 rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
+      <div className="bg-[#1A261D] border border-amber-600/30 text-amber-100 rounded-2xl p-5 sm:p-6 max-h-[calc(100vh-2rem)] overflow-y-auto max-w-md w-full shadow-2xl relative">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-amber-300 hover:text-white p-1 rounded-full transition-colors"

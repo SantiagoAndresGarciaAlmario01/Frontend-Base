@@ -141,9 +141,11 @@ export default function PublishDishModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn">
-      <div className="bg-[#18231B] border border-amber-600/30 text-amber-100 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative my-8">
+      <div role="dialog" aria-modal="true" aria-labelledby="publish-dish-title" className="bg-[#18231B] border border-amber-600/30 text-amber-100 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative my-8">
         <button
+          type="button"
           onClick={onClose}
+          aria-label="Cerrar publicación de plato"
           className="absolute top-4 right-4 text-amber-300 hover:text-white p-1 rounded-full transition-colors"
         >
           <X className="w-5 h-5" />
@@ -154,31 +156,32 @@ export default function PublishDishModal({
             <UtensilsCrossed className="w-5 h-5 text-[#62B869]" />
           </div>
           <div>
-            <h3 className="font-playfair text-xl font-bold text-amber-200">
-              Publicar Plato Casero (HU-04 / HU-05)
+            <h3 id="publish-dish-title" className="font-playfair text-xl font-bold text-amber-200">
+              Publicar un plato casero
             </h3>
             <p className="text-xs text-amber-300/80">Ofrece tus porciones frescas a tus vecinos</p>
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-900/50 border border-red-500/50 text-red-200 text-xs rounded-xl">
+          <div role="alert" className="mb-4 p-3 bg-red-900/50 border border-red-500/50 text-red-200 text-xs rounded-xl">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 text-emerald-200 text-xs rounded-xl">
+          <div role="status" className="mb-4 p-3 bg-emerald-900/50 border border-emerald-500/50 text-emerald-200 text-xs rounded-xl">
             {success}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-amber-300 mb-1">
+            <label htmlFor="publish-dish-name" className="block text-xs font-semibold text-amber-300 mb-1">
               Nombre del Plato (Máx 50 caracteres) *
             </label>
             <input
+              id="publish-dish-name"
               type="text"
               maxLength={50}
               value={name}
@@ -194,8 +197,9 @@ export default function PublishDishModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-amber-300 mb-1">Categoría *</label>
+              <label htmlFor="publish-dish-category" className="block text-xs font-semibold text-amber-300 mb-1">Categoría *</label>
               <select
+                id="publish-dish-category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value as any)}
                 className="w-full bg-[#101712] border border-amber-700/50 rounded-xl px-3 py-2 text-sm text-amber-100 focus:outline-none focus:border-[#F0822D]"
@@ -207,10 +211,11 @@ export default function PublishDishModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-amber-300 mb-1">
+              <label htmlFor="publish-dish-portions" className="block text-xs font-semibold text-amber-300 mb-1">
                 Porciones (1 a 20) *
               </label>
               <input
+                id="publish-dish-portions"
                 type="number"
                 min={1}
                 max={20}
@@ -223,10 +228,11 @@ export default function PublishDishModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-amber-300 mb-1">
+            <label htmlFor="publish-dish-price" className="block text-xs font-semibold text-amber-300 mb-1">
               Precio por porción ($ COP) *
             </label>
             <input
+              id="publish-dish-price"
               type="number"
               min={1000}
               step={500}
@@ -238,8 +244,8 @@ export default function PublishDishModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-amber-300 mb-1">
-              Etiquetas Dietéticas (HU-08)
+            <label htmlFor="publish-dish-description" className="block text-xs font-semibold text-amber-300 mb-1">
+              Opciones de alimentación
             </label>
             <div className="flex flex-wrap gap-2 pt-1">
               {["Vegetariano", "Sin Gluten", "Sin Lactosa", "Vegano"].map((tag) => (
@@ -247,6 +253,7 @@ export default function PublishDishModal({
                   type="button"
                   key={tag}
                   onClick={() => toggleTag(tag)}
+                  aria-pressed={dietaryTags.includes(tag)}
                   className={`px-3 py-1 text-xs rounded-full border transition-all ${
                     dietaryTags.includes(tag)
                       ? "bg-[#62B869] border-[#62B869] text-white font-medium"
@@ -257,6 +264,7 @@ export default function PublishDishModal({
                 </button>
               ))}
             </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-amber-200/80">Estas etiquetas describen el plato; no garantizan que esté libre de trazas. Indica los ingredientes y pide a tus clientes que confirmen alergias contigo.</p>
           </div>
 
           <div>
@@ -264,6 +272,7 @@ export default function PublishDishModal({
               Descripción del plato (Máx 200 caracteres) *
             </label>
             <textarea
+              id="publish-dish-description"
               maxLength={200}
               rows={3}
               value={description}
@@ -330,10 +339,11 @@ export default function PublishDishModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-amber-300 mb-1">
+            <label htmlFor="publish-dish-sector" className="block text-xs font-semibold text-amber-300 mb-1">
               Conjunto Residencial / Sector
             </label>
             <input
+              id="publish-dish-sector"
               type="text"
               value={residentialComplex}
               onChange={(e) => setResidentialComplex(e.target.value)}

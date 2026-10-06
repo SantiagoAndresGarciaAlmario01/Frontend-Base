@@ -13,27 +13,45 @@ export default function AnimatedKitchenBackground() {
 
   useEffect(() => {
     const totalFrames = 150;
-    const images: HTMLImageElement[] = [];
+    const images: HTMLImageElement[] = new Array(totalFrames);
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let isCancelled = false;
 
     const pad = (n: number) => String(n).padStart(3, "0");
 
-    // Load Frame 1 immediately
+    // Load Frame 1 immediately; decode the rest with a small concurrency limit.
     const frame1 = new Image();
-    frame1.src = `/frames-login/frame_001.png`;
+    frame1.decoding = "async";
     images[0] = frame1;
 
     frame1.onload = () => {
-      drawCanvasFrame(frame1);
+      if (!isCancelled) drawCanvasFrame(frame1);
     };
+    frame1.src = `/frames-login-webp/frame_001.webp`;
 
-    // Preload remaining frames 2..150
-    for (let i = 1; i < totalFrames; i++) {
-      const img = new Image();
-      img.src = `/frames-login/frame_${pad(i + 1)}.png`;
-      images[i] = img;
-    }
     imagesRef.current = images;
+
+    let nextFrame = 1;
+    const loadFrames = async () => {
+      const worker = async () => {
+        while (!isCancelled) {
+          const index = nextFrame++;
+          if (index >= totalFrames) return;
+
+          await new Promise<void>((resolve) => {
+            const img = new Image();
+            img.decoding = "async";
+            images[index] = img;
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+            img.src = `/frames-login-webp/frame_${pad(index + 1)}.webp`;
+          });
+        }
+      };
+
+      await Promise.all(Array.from({ length: 5 }, () => worker()));
+    };
+    void loadFrames();
 
     const drawCanvasFrame = (img: HTMLImageElement) => {
       if (!canvasRef.current || !img || !img.complete || img.naturalWidth === 0) return;
@@ -119,6 +137,7 @@ export default function AnimatedKitchenBackground() {
     window.addEventListener("resize", handleResize);
 
     return () => {
+      isCancelled = true;
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", handleResize);
     };

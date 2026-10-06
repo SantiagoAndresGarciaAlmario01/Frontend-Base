@@ -7,7 +7,7 @@ import BrandLogo from "@/components/BrandLogo";
 import AnimatedKitchenBackground from "@/components/AnimatedKitchenBackground";
 import AccountNav from "@/components/AccountNav";
 import ChatModal from "@/components/modals/ChatModal";
-import { getStoredReservations, getStoredNotifications, saveReservations } from "@/lib/ollacercana-store";
+import { getStoredReservations, getStoredNotifications, getStoredReviews, saveReviews, saveReservations, Review } from "@/lib/ollacercana-store";
 import {
   Clock,
   CheckCircle2,
@@ -59,12 +59,8 @@ interface Reservation {
   rated?: boolean;
   cookName?: string;
   pickupTime?: string;
-}
-
-function homeForRole(role: UserProfile["role"]): string {
-  if (role === "cocinera") return "/cuenta/cocina";
-  if (role === "admin") return "/cuenta/admin";
-  return "/menu";
+  paymentReceipt?: string;
+  paymentReceiptName?: string;
 }
 
 const getDefaultReservations = (): Reservation[] => [
@@ -110,29 +106,32 @@ export default function ReservasPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [activeChatReservationId, setActiveChatReservationId] = useState<string | null>(null);
   const [ratingResId, setRatingResId] = useState<string | null>(null);
-  const [ratingStars, setRatingStars] = useState(5);
+  const [ratingStars, setRatingStars] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+  const [ratingError, setRatingError] = useState("");
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
 
   useEffect(() => {
     const savedUserJson = localStorage.getItem("ollacercana_user");
     if (!savedUserJson) {
-      router.push("/cuenta");
+      router.replace("/cuenta/sesion-expirada");
       return;
     }
     let parsed: UserProfile;
     try {
       parsed = JSON.parse(savedUserJson);
       if (!parsed.isLoggedIn) {
-        router.push("/cuenta");
+        router.replace("/cuenta/sesion-expirada");
         return;
       }
     } catch (e) {
       console.error(e);
-      router.push("/cuenta");
+      router.replace("/cuenta/sesion-expirada");
       return;
     }
 
     if (parsed.role !== "comprador") {
-      router.push(homeForRole(parsed.role));
+      router.replace("/cuenta/acceso-denegado");
       return;
     }
 
@@ -162,6 +161,8 @@ export default function ReservasPage() {
             buyerName: sr.buyerName,
             buyerPhone: "3001234567",
             paymentMethod: sr.preferredPaymentMethod,
+            paymentReceipt: sr.paymentReceipt,
+            paymentReceiptName: sr.paymentReceiptName,
             price: `$${sr.totalPrice.toLocaleString("es-CO")}`,
             status:
               sr.status === "PENDIENTE"
@@ -236,7 +237,7 @@ export default function ReservasPage() {
     setReservations(loadedRes);
 
     try {
-      setUnreadCount(getStoredNotifications().filter((n) => !n.read).length);
+      setUnreadCount(getStoredNotifications().filter((n) => (n.targetEmail === parsed.email || n.targetEmail === "usuario") && !n.read).length);
     } catch (e) {
       console.error(e);
     }
@@ -280,37 +281,70 @@ export default function ReservasPage() {
     const updated = reservations.map((r) => {
       if (r.id === resId) {
         const compradorTimestamp = Date.now();
-        const fullyClosed = !!r.cocineraClosedAt;
         return {
           ...r,
           compradorClosedAt: compradorTimestamp,
-          status: fullyClosed ? ("closed" as const) : ("confirmed" as const),
+          status: "closed" as const,
         };
       }
       return r;
     });
     setReservations(updated);
     localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+    saveReservations(getStoredReservations().map((reservation) => reservation.id === resId ? {
+      ...reservation,
+      status: "COMPLETADA",
+      buyerConfirmedDelivery: true,
+    } : reservation));
+    setRatingStars(0);
+    setRatingComment("");
+    setRatingError("");
+    setRatingSubmitted(false);
+    setRatingResId(resId);
   };
 
   const handleRatingSubmit = () => {
     if (!ratingResId) return;
+    if (ratingStars < 1) {
+      setRatingError("Debe seleccionar al menos una estrella");
+      return;
+    }
+    if (!ratingComment.trim()) {
+      setRatingError("Por favor escribir un comentario");
+      return;
+    }
+    const reservation = getStoredReservations().find((item) => item.id === ratingResId);
+    const reviews = getStoredReviews();
+    if (reservation && !reviews.some((review) => review.reservationId === reservation.id)) {
+      const review: Review = {
+        id: `review-${Date.now()}`,
+        cookId: reservation.cookId,
+        reservationId: reservation.id,
+        buyerName: user?.name || "Vecino",
+        rating: ratingStars,
+        comment: ratingComment.trim(),
+        createdAt: new Date().toLocaleDateString("es-CO"),
+        status: "Pendiente",
+      };
+      saveReviews([review, ...reviews]);
+    }
     const updated = reservations.map((r) => (r.id === ratingResId ? { ...r, rated: true } : r));
     setReservations(updated);
     localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
-    setRatingResId(null);
+    setRatingSubmitted(true);
+    setRatingError("");
   };
 
   if (checkingSession || !user) {
     return (
-      <main className="relative min-h-screen w-full bg-[#14110f] flex items-center justify-center">
+      <main data-theme-page className="relative min-h-screen w-full bg-[#14110f] flex items-center justify-center">
         <p className="text-stone-400 text-sm font-semibold">Cargando...</p>
       </main>
     );
   }
 
   return (
-    <main className="relative min-h-screen w-full bg-[#14110f] text-[#f4efe6] font-['Outfit',sans-serif] overflow-x-hidden flex flex-col justify-between selection:bg-[#F0822D] selection:text-white">
+    <main data-theme-page className="relative min-h-screen w-full bg-[#14110f] text-[#f4efe6] font-['Outfit',sans-serif] overflow-x-hidden flex flex-col justify-between selection:bg-[#F0822D] selection:text-white">
       <AnimatedKitchenBackground />
 
       <header className="relative z-10 w-full pt-10 pb-6 px-6 flex flex-col items-center justify-center text-center">
@@ -320,14 +354,14 @@ export default function ReservasPage() {
       </header>
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col items-center justify-center">
-        <div className="w-full max-w-4xl bg-black/75 backdrop-blur-xl border border-white/20 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 my-6">
+        <div className="w-full max-w-4xl bg-black/75 backdrop-blur-xl border-2 border-[#8B5E34]/50 rounded-3xl p-6 sm:p-10 shadow-2xl shadow-black/60 space-y-8 my-6">
           <AccountNav user={user} current="reservas" unreadCount={unreadCount} />
 
           <div className="space-y-6 text-left">
             <div className="flex flex-wrap items-center justify-between gap-3 bg-[#131F18] border border-emerald-600/30 rounded-2xl p-4 shadow-md">
               <div>
-                <h4 className="text-sm font-bold text-emerald-300 flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-emerald-400" />
+                <h4 className="font-['Caveat',cursive] text-2xl font-bold text-[#F4C430] flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-emerald-400" />
                   <span>Mis Reservas y Pedidos Realizados</span>
                 </h4>
                 <p className="text-xs text-stone-300">
@@ -396,22 +430,22 @@ export default function ReservasPage() {
                   .map((res) => (
                     <div
                       key={res.id}
-                      className="p-5 rounded-2xl bg-black/60 border border-white/10 space-y-4 shadow-lg hover:border-white/20 transition-all"
+                      className="p-5 rounded-2xl bg-[#efe0c2] border border-[#bda078] text-[#2b2117] space-y-4 shadow-lg hover:border-[#c84b31]/70 transition-all"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dashed border-[#ae9066] pb-3">
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-mono text-[#F0822D] font-bold">{res.id}</span>
-                            <span className="text-xs text-stone-400">
-                              | Cocinera: <strong className="text-amber-300">{res.cookName || "Doña Elena"}</strong>
+                            <span className="text-xs text-[#80694d]">
+                              · Cocina de <strong className="text-[#52663d]">{res.cookName || "Doña Elena"}</strong>
                             </span>
                           </div>
-                          <h5 className="text-base font-bold text-white mt-0.5">{res.dish}</h5>
+                          <h5 className="text-base font-bold text-[#2b2117] mt-0.5">{res.dish}</h5>
                         </div>
 
                         <div className="flex items-center gap-2">
                           {res.status === "pending" && (
-                            <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono flex items-center gap-1.5">
+                            <span className="px-3 py-1 rounded-full bg-[#fff0cf] border border-[#d6a248] text-[#70430c] text-xs font-mono flex items-center gap-1.5">
                               <Clock className="w-3.5 h-3.5" />
                               Quedan: {getRemainingTime(res.expiresAt)}
                             </span>
@@ -419,12 +453,12 @@ export default function ReservasPage() {
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
                               res.status === "pending"
-                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                ? "bg-[#fff0cf] text-[#70430c] border border-[#d6a248]"
                                 : res.status === "confirmed"
-                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                ? "bg-[#e4efd8] text-[#304522] border border-[#82996b]"
                                 : res.status === "closed"
-                                ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
-                                : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                                ? "bg-[#e3e8eb] text-[#394b55] border border-[#82919a]"
+                                : "bg-[#f5ded7] text-[#763725] border border-[#ad6c59]"
                             }`}
                           >
                             {res.status === "pending"
@@ -438,39 +472,53 @@ export default function ReservasPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-stone-300">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-[#6a5037]">
                         <div>
-                          <span className="text-stone-500 block text-[10px] uppercase">Cantidad</span>
-                          <span className="font-semibold text-white">{res.quantity} porción(es)</span>
+                          <span className="text-[#80694d] block text-[10px] uppercase">Cantidad</span>
+                          <span className="font-semibold text-[#2b2117]">{res.quantity} porción(es)</span>
                         </div>
                         <div>
-                          <span className="text-stone-500 block text-[10px] uppercase">Medio de Pago</span>
-                          <span className="font-semibold text-amber-300">{res.paymentMethod}</span>
+                          <span className="text-[#80694d] block text-[10px] uppercase">Medio de Pago</span>
+                          <span className="font-semibold text-[#70430c]">{res.paymentMethod}</span>
                         </div>
                         <div>
-                          <span className="text-stone-500 block text-[10px] uppercase">Recogida Est.</span>
-                          <span className="font-semibold text-white">{res.pickupTime || "15-20 min"}</span>
+                          <span className="text-[#80694d] block text-[10px] uppercase">Recogida Est.</span>
+                          <span className="font-semibold text-[#2b2117]">{res.pickupTime || "15-20 min"}</span>
                         </div>
                         <div>
-                          <span className="text-stone-500 block text-[10px] uppercase">Total</span>
-                          <span className="font-bold text-[#F0822D]">{res.price}</span>
+                          <span className="text-[#80694d] block text-[10px] uppercase">Total</span>
+                          <span className="font-bold text-[#9b3f22]">{res.price}</span>
                         </div>
                       </div>
 
+                      <div aria-label="Proceso del pedido" className="rounded-xl border border-[#c4a77d] bg-[#f7eddb] p-3">
+                        <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[#80694d]">Así avanza tu pedido</p>
+                        <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          {[res.paymentReceipt ? "Comprobante enviado" : "Solicitud enviada", "Cocinera confirma", "Preparación y entrega", "Recibido"].map((step, index) => {
+                            const activeStep = res.status === "closed" ? 3 : res.status === "confirmed" ? (res.cocineraConfirmedDelivery ? 2 : 1) : 0;
+                            const done = index <= activeStep;
+                            const current = !done && ((res.status === "pending" && index === 1) || (res.status === "confirmed" && index === activeStep + 1));
+                            return <li key={step} className={`flex items-center gap-1.5 text-[10px] leading-tight ${done ? "text-[#304522]" : current ? "text-[#70430c]" : "text-[#594735]"}`}><span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[9px] font-bold ${done ? "border-[#708b59] bg-[#e4efd8] text-[#304522]" : current ? "border-[#d6a248] bg-[#fff0cf] text-[#70430c]" : "border-[#9b8567] bg-[#f5e9d2] text-[#594735]"}`}>{done ? "✓" : index + 1}</span>{step}</li>;
+                          })}
+                        </ol>
+                        {res.paymentReceipt && <a href={res.paymentReceipt} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[11px] font-bold text-[#304522] underline underline-offset-2">Comprobante adjunto: {res.paymentReceiptName || "ver archivo"}</a>}
+                      </div>
+
                       {res.status === "rejected" && (
-                        <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-200 text-xs">
+                        <div className="p-3 rounded-xl bg-[#f5ded7] border border-[#ad6c59] text-[#763725] text-xs">
                           <strong>Motivo de rechazo:</strong> {res.rejectionReason || "Sin porciones disponibles"}
-                          {res.rejectionComment && <p className="text-[11px] text-rose-300 italic mt-1">"{res.rejectionComment}"</p>}
+                          {res.rejectionComment && <p className="text-[11px] text-[#763725] italic mt-1">"{res.rejectionComment}"</p>}
                         </div>
                       )}
 
                       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
                         <button
                           onClick={() => setActiveChatReservationId(res.id)}
-                          className="px-4 py-2 rounded-xl bg-stone-900 border border-white/15 hover:border-[#F0822D] text-stone-200 hover:text-white text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
+                          disabled={res.status === "closed"}
+                          className="px-4 py-2 rounded-xl bg-stone-900 border border-white/15 hover:border-[#F0822D] text-stone-200 hover:text-white text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <MessageSquare className="w-4 h-4 text-[#F0822D]" />
-                          <span>Abrir Chat con Cocinera</span>
+                          <span>{res.status === "closed" ? "Chat finalizado" : "Chat con cocinera"}</span>
                         </button>
 
                         {compradorSubTab === "historial" && (
@@ -489,7 +537,7 @@ export default function ReservasPage() {
                             className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
                           >
                             <CheckCircle2 className="w-4 h-4" />
-                            <span>Confirmar Recepción y Cierre</span>
+                            <span>Marcar pedido recibido y cerrar chat</span>
                           </button>
                         )}
                       </div>
@@ -510,13 +558,13 @@ export default function ReservasPage() {
 
                           {!res.rated ? (
                             <button
-                              onClick={() => setRatingResId(res.id)}
+                              onClick={() => { setRatingStars(0); setRatingComment(""); setRatingError(""); setRatingSubmitted(false); setRatingResId(res.id); }}
                               className="px-4 py-1.5 rounded-lg bg-sky-400 hover:bg-sky-300 text-black font-bold text-xs transition-colors cursor-pointer"
                             >
                               Calificar
                             </button>
                           ) : (
-                            <span className="text-amber-300 font-mono">★ Calificado</span>
+                            <span className="text-amber-300 font-mono">★ Reseña enviada · pendiente de publicación</span>
                           )}
                         </div>
                       )}
@@ -538,17 +586,13 @@ export default function ReservasPage() {
         </Link>
 
         <div className="flex flex-wrap items-center justify-end gap-6 text-xs font-bold tracking-widest uppercase text-stone-300">
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              alert("Centro de Ayuda OllaCercana: Soporte para cocineras y compradores vecinales.");
-            }}
+          <Link
+            href="/ayuda"
             className="hover:text-white flex items-center gap-2 transition-colors"
           >
             <HelpCircle className="w-3.5 h-3.5 text-stone-400" />
             <span>Ayuda</span>
-          </a>
+          </Link>
 
           <span className="text-[11px] text-stone-500 font-mono tracking-normal">v2.4</span>
         </div>
@@ -556,28 +600,40 @@ export default function ReservasPage() {
 
       {ratingResId && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="max-w-sm w-full bg-[#1A1C1E] border border-sky-500/40 rounded-3xl p-6 shadow-2xl text-center space-y-4">
-            <h4 className="text-base font-bold text-white">Calificar Transacción</h4>
-            <p className="text-xs text-stone-300">¿Cómo fue la experiencia del pedido {ratingResId}?</p>
+          <div role="dialog" aria-modal="true" aria-labelledby="rating-title" className="max-w-md w-full bg-[#f4e8cf] border-2 border-[#b89a6f] text-[#30251b] rounded-3xl p-6 shadow-2xl space-y-4">
+            <h4 id="rating-title" className="font-['Caveat',cursive] text-3xl font-bold">Cuéntanos cómo te fue</h4>
+            <p className="text-sm text-[#6a5037]">Tu opinión ayuda a que el barrio elija con confianza. Pedido {ratingResId}.</p>
 
+            {ratingSubmitted ? (
+              <div role="status" className="space-y-4">
+                <p className="rounded-xl border border-emerald-700/30 bg-emerald-100 p-4 text-center text-sm font-semibold text-emerald-900">Tu reseña se publicará al cumplirse la ventana</p>
+                <button onClick={() => setRatingResId(null)} className="w-full rounded-xl bg-[#526f42] py-3 text-sm font-bold text-white">Cerrar</button>
+              </div>
+            ) : <>
             <div className="flex items-center justify-center gap-2 my-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
-                  onClick={() => setRatingStars(star)}
-                  className="p-1 text-amber-400 hover:scale-125 transition-transform"
+                  type="button"
+                  onClick={() => { setRatingStars(star); setRatingError(""); }}
+                  aria-label={`${star} ${star === 1 ? "estrella" : "estrellas"}`}
+                  aria-pressed={star === ratingStars}
+                  className="p-1 text-amber-500 hover:scale-110 transition-transform"
                 >
                   <Star className={`w-7 h-7 ${star <= ratingStars ? "fill-amber-400" : "text-stone-700"}`} />
                 </button>
               ))}
             </div>
 
-            <button
-              onClick={handleRatingSubmit}
-              className="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold text-xs"
-            >
-              Guardar Calificación
-            </button>
+            <label htmlFor="review-comment" className="block text-left text-sm font-semibold">Comentario <span className="font-normal text-[#80694d]">(obligatorio)</span></label>
+            <textarea id="review-comment" rows={3} maxLength={400} value={ratingComment} onChange={(event) => { setRatingComment(event.target.value); if (event.target.value.trim()) setRatingError(""); }} placeholder="¿Qué te gustó del sabor, la porción o la atención?" required className="w-full resize-y rounded-xl border border-[#b89a6f] bg-white/75 p-3 text-sm text-[#30251b] placeholder:text-[#9b8668] focus:outline-none focus:ring-2 focus:ring-[#526f42]" />
+            {ratingError && <p role="alert" className="text-sm font-semibold text-red-700">{ratingError}</p>}
+
+            <div className="flex gap-3">
+              <button onClick={() => setRatingResId(null)} className="flex-1 rounded-xl border border-[#8f795b] py-3 text-sm font-semibold text-[#57452f]">Ahora no</button>
+              <button onClick={handleRatingSubmit} className="flex-1 rounded-xl bg-[#526f42] py-3 text-sm font-bold text-white hover:bg-[#415a35]">Enviar reseña</button>
+            </div>
+            </>}
           </div>
         </div>
       )}

@@ -24,7 +24,7 @@ export default function ReputationModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    const allReviews = getStoredReviews();
+    const allReviews = getStoredReviews().filter((review) => review.status !== "Pendiente");
     if (cookId) {
       setReviews(allReviews.filter((r) => r.cookId === cookId));
     } else {
@@ -38,7 +38,7 @@ export default function ReputationModal({
   const avgRating =
     totalReviews > 0
       ? (reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
-      : "5.0";
+      : "—";
   const numericAvg = parseFloat(avgRating);
   const isCocineraDestacada = numericAvg >= 4.8 && totalReviews >= 3;
 
@@ -47,10 +47,11 @@ export default function ReputationModal({
     : reviews;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn">
-      <div className="bg-[#18231B] border border-amber-600/30 text-amber-100 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 overflow-y-auto animate-fadeIn sm:p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="cook-reputation-title" className="bg-[#18231B] border border-amber-600/30 text-amber-100 rounded-2xl p-5 sm:p-6 max-w-lg w-full max-h-[calc(100dvh-1.5rem)] overflow-y-auto shadow-2xl relative my-auto">
         <button
           onClick={onClose}
+          aria-label="Cerrar reputación"
           className="absolute top-4 right-4 text-amber-300 hover:text-white p-1 rounded-full transition-colors"
         >
           <X className="w-5 h-5" />
@@ -65,7 +66,7 @@ export default function ReputationModal({
           />
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-playfair text-xl font-bold text-amber-100">{cookName}</h3>
+              <h3 id="cook-reputation-title" className="font-playfair text-xl font-bold text-amber-100">Opiniones de {cookName}</h3>
               {isCocineraDestacada && (
                 <span className="bg-gradient-to-r from-amber-500 to-amber-700 text-black text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow border border-amber-300 flex items-center gap-1">
                   <Award className="w-3 h-3 text-black" />
@@ -78,7 +79,7 @@ export default function ReputationModal({
                 <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
                 {avgRating}
               </span>
-              <span className="text-xs text-amber-300/80">({totalReviews} opiniones verificadas)</span>
+              <span className="text-xs text-amber-300/80">{totalReviews ? `${totalReviews} opiniones` : "Aún no tiene opiniones"}</span>
             </div>
           </div>
         </div>
@@ -91,6 +92,7 @@ export default function ReputationModal({
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setStarFilter(null)}
+              aria-pressed={starFilter === null}
               className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all ${
                 starFilter === null
                   ? "bg-[#F0822D] text-white shadow"
@@ -105,6 +107,7 @@ export default function ReputationModal({
                 <button
                   key={stars}
                   onClick={() => setStarFilter(stars)}
+                  aria-pressed={starFilter === stars}
                   className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all ${
                     starFilter === stars
                       ? "bg-[#F0822D] text-white shadow"
@@ -151,7 +154,7 @@ export default function ReputationModal({
             onClick={onClose}
             className="w-full py-2.5 bg-white/10 hover:bg-white/15 text-amber-200 text-xs font-semibold rounded-xl transition-all"
           >
-            Cerrar Reputación
+              Cerrar
           </button>
         </div>
       </div>

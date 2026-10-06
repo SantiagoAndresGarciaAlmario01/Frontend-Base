@@ -59,11 +59,14 @@ export interface Reservation {
   portions: number;
   pricePerPortion: number;
   totalPrice: number;
-  preferredPaymentMethod: "Efectivo" | "Nequi" | "Daviplata";
+  preferredPaymentMethod: "Efectivo" | "Nequi" | "Daviplata" | "Llaves";
+  paymentReceipt?: string;
+  paymentReceiptName?: string;
   pickupTime: string;
   status: "PENDIENTE" | "CONFIRMADO" | "RECHAZADA" | "EXPIRADA" | "COMPLETADA";
   buyerConfirmedDelivery?: boolean;
   cookConfirmedDelivery?: boolean;
+  cookConfirmedPayment?: boolean;
   hasOpenReport?: boolean;
   createdAt: string; // ISO string
   expiresAt: string; // ISO string (10 min after creation)
@@ -77,6 +80,7 @@ export interface Review {
   rating: number; // 1..5
   comment: string;
   createdAt: string;
+  status?: "Pendiente" | "Publicada";
 }
 
 export interface ChatMessage {
@@ -412,6 +416,18 @@ export const saveNotifications = (notifs: AppNotification[]) => {
   localStorage.setItem("ollacercana_notifications_v2", JSON.stringify(notifs));
 };
 
+const BROWSER_NOTIFICATIONS_KEY = "ollacercana_browser_notifications_v1";
+
+export const getBrowserNotificationsEnabled = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(BROWSER_NOTIFICATIONS_KEY) === "true";
+};
+
+export const setBrowserNotificationsEnabled = (enabled: boolean) => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(BROWSER_NOTIFICATIONS_KEY, String(enabled));
+};
+
 export const addNotification = (title: string, message: string, targetEmail: string = "usuario") => {
   const current = getStoredNotifications();
   const newNotif: AppNotification = {
@@ -423,4 +439,12 @@ export const addNotification = (title: string, message: string, targetEmail: str
     timestamp: "Ahora mismo",
   };
   saveNotifications([newNotif, ...current]);
+
+  if (getBrowserNotificationsEnabled() && "Notification" in window && Notification.permission === "granted") {
+    try {
+      new Notification(title, { body: message, icon: "/brand/ollacercana-icon.svg", tag: newNotif.id });
+    } catch (error) {
+      console.warn("No fue posible mostrar el aviso del navegador.", error);
+    }
+  }
 };

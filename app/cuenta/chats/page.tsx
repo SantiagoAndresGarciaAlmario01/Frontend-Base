@@ -51,12 +51,6 @@ interface Reservation {
   pickupTime?: string;
 }
 
-function homeForRole(role: UserProfile["role"]): string {
-  if (role === "cocinera") return "/cuenta/cocina";
-  if (role === "admin") return "/cuenta/admin";
-  return "/menu";
-}
-
 const getDefaultReservations = (): Reservation[] => [
   {
     id: "RES-101",
@@ -95,6 +89,8 @@ export default function ChatsPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadByReservation, setUnreadByReservation] = useState<Record<string, number>>({});
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [activeChatReservationId, setActiveChatReservationId] = useState<string | null>(null);
@@ -102,24 +98,24 @@ export default function ChatsPage() {
   useEffect(() => {
     const savedUserJson = localStorage.getItem("ollacercana_user");
     if (!savedUserJson) {
-      router.push("/cuenta");
+      router.replace("/cuenta/sesion-expirada");
       return;
     }
     let parsed: UserProfile;
     try {
       parsed = JSON.parse(savedUserJson);
       if (!parsed.isLoggedIn) {
-        router.push("/cuenta");
+        router.replace("/cuenta/sesion-expirada");
         return;
       }
     } catch (e) {
       console.error(e);
-      router.push("/cuenta");
+      router.replace("/cuenta/sesion-expirada");
       return;
     }
 
     if (parsed.role !== "comprador" && parsed.role !== "cocinera") {
-      router.push(homeForRole(parsed.role));
+      router.replace("/cuenta/acceso-denegado");
       return;
     }
 
@@ -222,8 +218,23 @@ export default function ChatsPage() {
 
     setReservations(loadedRes);
 
+    const viewerName = parsed.name || parsed.commercialName || parsed.email;
+    const calculateUnread = () => loadedRes.reduce((counts, reservation) => {
+      const messages = getStoredMessages(reservation.id);
+      const marker = localStorage.getItem(`ollacercana_chat_read_${reservation.id}_${parsed.email}`);
+      const markerIndex = marker ? messages.findIndex((message) => message.id === marker) : -1;
+      const incoming = messages.slice(markerIndex + 1).filter((message) =>
+        message.sender !== viewerName && message.sender !== parsed.commercialName && message.sender !== parsed.email && message.sender !== "Sistema OllaCercana"
+      );
+      counts[reservation.id] = incoming.length;
+      return counts;
+    }, {} as Record<string, number>);
+    const unreadCounts = calculateUnread();
+    setUnreadByReservation(unreadCounts);
+    setUnreadMessages(Object.values(unreadCounts).reduce((total, count) => total + count, 0));
+
     try {
-      setUnreadCount(getStoredNotifications().filter((n) => !n.read).length);
+      setUnreadCount(getStoredNotifications().filter((n) => (n.targetEmail === parsed.email || n.targetEmail === "usuario") && !n.read).length);
     } catch (e) {
       console.error(e);
     }
@@ -233,14 +244,14 @@ export default function ChatsPage() {
 
   if (checkingSession || !user) {
     return (
-      <main className="relative min-h-screen w-full bg-[#14110f] flex items-center justify-center">
+      <main data-theme-page className="relative min-h-screen w-full bg-[#14110f] flex items-center justify-center">
         <p className="text-stone-400 text-sm font-semibold">Cargando...</p>
       </main>
     );
   }
 
   return (
-    <main className="relative min-h-screen w-full bg-[#14110f] text-[#f4efe6] font-['Outfit',sans-serif] overflow-x-hidden flex flex-col justify-between selection:bg-[#F0822D] selection:text-white">
+    <main data-theme-page className="relative min-h-screen w-full bg-[#14110f] text-[#f4efe6] font-['Outfit',sans-serif] overflow-x-hidden flex flex-col justify-between selection:bg-[#F0822D] selection:text-white">
       <AnimatedKitchenBackground />
 
       <header className="relative z-10 w-full pt-10 pb-6 px-6 flex flex-col items-center justify-center text-center">
@@ -250,17 +261,17 @@ export default function ChatsPage() {
       </header>
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col items-center justify-center">
-        <div className="w-full max-w-4xl bg-black/75 backdrop-blur-xl border border-white/20 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 my-6">
-          <AccountNav user={user} current="chats" unreadCount={unreadCount} />
+        <div className="w-full max-w-4xl bg-black/75 backdrop-blur-xl border-2 border-[#8B5E34]/50 rounded-3xl p-6 sm:p-10 shadow-2xl shadow-black/60 space-y-8 my-6">
+          <AccountNav user={user} current="chats" unreadCount={unreadCount} unreadMessageCount={unreadMessages} />
 
           <div className="space-y-6 text-left">
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#1C1A24] border border-purple-500/30 rounded-2xl p-4 shadow-md">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#efe0c2] border border-[#9b774f] rounded-2xl p-4 shadow-md text-[#2b2117]">
               <div>
-                <h4 className="text-sm font-bold text-purple-200 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-purple-400" />
-                  <span>Mis Conversaciones y Chats</span>
+                <h4 className="font-['Caveat',cursive] text-2xl font-bold text-[#493323] flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-[#a84029]" />
+                  <span>Conversaciones de tus pedidos</span>
                 </h4>
-                <p className="text-xs text-stone-300">Canal directo de comunicación entre compradores y cocineras del barrio.</p>
+                <p className="text-xs text-[#5b4a38]">Coordina cada reserva directamente con la cocinera, sin salir de OllaCercana.</p>
               </div>
             </div>
 
@@ -281,11 +292,19 @@ export default function ChatsPage() {
                 {reservations.map((res) => {
                   const msgs = getStoredMessages(res.id);
                   const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
+                  const unreadForChat = unreadByReservation[res.id] ?? 0;
+
+                  const openChat = () => {
+                    if (lastMsg) localStorage.setItem(`ollacercana_chat_read_${res.id}_${user.email}`, lastMsg.id);
+                    setUnreadMessages((count) => Math.max(0, count - unreadForChat));
+                    setUnreadByReservation((counts) => ({ ...counts, [res.id]: 0 }));
+                    setActiveChatReservationId(res.id);
+                  };
 
                   return (
                     <div
                       key={res.id}
-                      className="p-4 rounded-2xl bg-black/60 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg hover:border-purple-500/40 transition-all"
+                      className="p-4 rounded-2xl bg-[#efe0c2] border border-[#bda078] text-[#2b2117] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg hover:border-[#c84b31]/70 transition-all"
                     >
                       <div className="flex items-start gap-3">
                         <div className="w-10 h-10 rounded-full bg-[#F0822D]/20 border border-[#F0822D]/40 flex items-center justify-center text-[#F0822D] font-bold shrink-0 mt-0.5">
@@ -293,28 +312,33 @@ export default function ChatsPage() {
                         </div>
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h5 className="text-sm font-bold text-white">{res.cookName || "Doña Elena"}</h5>
-                            <span className="text-xs text-stone-400 font-mono">({res.dish})</span>
+                          <h5 className="text-sm font-bold text-[#2b2117]">{res.dish}</h5>
+                            <span className="text-xs text-[#6a5037]">Cocina de {res.cookName || "Doña Elena"}</span>
                           </div>
 
-                          <p className="text-xs text-stone-300 italic line-clamp-1">
+                          <div className="flex items-center gap-2">
+                          <p className="min-w-0 text-xs text-[#5b4a38] italic line-clamp-1">
                             {lastMsg ? (
                               <span>
                                 <strong>{lastMsg.sender}:</strong> "{lastMsg.text}"
                               </span>
                             ) : (
-                              <span className="text-stone-500 font-normal">Sin mensajes recientes. Haz clic para chatear.</span>
+                              <span className="text-[#80694d] font-normal">Aún no hay mensajes. Entra a coordinar tu pedido.</span>
                             )}
                           </p>
+                          {unreadForChat > 0 && <span className="shrink-0 rounded-full bg-[#a84029] px-2 py-0.5 text-[10px] font-bold text-white">{unreadForChat} sin leer</span>}
+                          </div>
+                          {res.status === "closed" && <p className="text-[10px] font-bold text-[#80694d]">Pedido recibido · conversación finalizada</p>}
                         </div>
                       </div>
 
                       <button
-                        onClick={() => setActiveChatReservationId(res.id)}
-                        className="px-4 py-2.5 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0 shadow-md"
+                        onClick={openChat}
+                        disabled={res.status === "closed" || res.status === "rejected"}
+                        className="px-4 py-2.5 rounded-xl bg-[#F0822D] hover:bg-[#d97224] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0 shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <MessageSquare className="w-4 h-4" />
-                        <span>Abrir Chat</span>
+                        <span>{res.status === "closed" ? "Chat finalizado" : res.status === "rejected" ? "Solicitud cerrada" : "Abrir conversación"}</span>
                       </button>
                     </div>
                   );
@@ -335,17 +359,13 @@ export default function ChatsPage() {
         </Link>
 
         <div className="flex flex-wrap items-center justify-end gap-6 text-xs font-bold tracking-widest uppercase text-stone-300">
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              alert("Centro de Ayuda OllaCercana: Soporte para cocineras y compradores vecinales.");
-            }}
+          <Link
+            href="/ayuda"
             className="hover:text-white flex items-center gap-2 transition-colors"
           >
             <HelpCircle className="w-3.5 h-3.5 text-stone-400" />
             <span>Ayuda</span>
-          </a>
+          </Link>
 
           <span className="text-[11px] text-stone-500 font-mono tracking-normal">v2.4</span>
         </div>
@@ -354,7 +374,32 @@ export default function ChatsPage() {
       {user && (
         <ChatModal
           isOpen={!!activeChatReservationId}
-          onClose={() => setActiveChatReservationId(null)}
+          onClose={() => {
+            setActiveChatReservationId(null);
+            const identity = user.email;
+            const incomingTotal = reservations.reduce((total, item) => {
+              const messages = getStoredMessages(item.id);
+              const marker = localStorage.getItem(`ollacercana_chat_read_${item.id}_${identity}`);
+              const markerIndex = marker ? messages.findIndex((message) => message.id === marker) : -1;
+              return total + messages.slice(markerIndex + 1).filter((message) => message.sender !== user.name && message.sender !== user.commercialName && message.sender !== user.email && message.sender !== "Sistema OllaCercana").length;
+            }, 0);
+            setUnreadMessages(incomingTotal);
+            setUnreadByReservation((counts) => {
+              const updated = { ...counts };
+              for (const item of reservations) {
+                const messages = getStoredMessages(item.id);
+                const marker = localStorage.getItem(`ollacercana_chat_read_${item.id}_${identity}`);
+                const markerIndex = marker ? messages.findIndex((message) => message.id === marker) : -1;
+                updated[item.id] = messages.slice(markerIndex + 1).filter((message) => message.sender !== user.name && message.sender !== user.commercialName && message.sender !== user.email && message.sender !== "Sistema OllaCercana").length;
+              }
+              return updated;
+            });
+            const sharedReservations = getStoredReservations();
+            setReservations((previous) => previous.map((item) => {
+              const shared = sharedReservations.find((reservation) => reservation.id === item.id);
+              return shared?.status === "COMPLETADA" ? { ...item, status: "closed" } : item;
+            }));
+          }}
           reservationId={activeChatReservationId}
           currentUser={user}
           onOpenRatingModal={() => {}}

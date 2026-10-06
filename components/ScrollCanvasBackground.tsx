@@ -1,15 +1,20 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 interface ScrollCanvasBackgroundProps {
   scrollContainerRef: React.RefObject<HTMLElement | null>;
   totalFrames?: number;
 }
 
+const getFramePath = (index: number) => {
+  const padded = String(index).padStart(3, "0");
+  return `/frames/frame_${padded}.png`;
+};
+
 export default function ScrollCanvasBackground({
   scrollContainerRef,
-  totalFrames = 296,
+  totalFrames = 150,
 }: ScrollCanvasBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imagesRef = useRef<(HTMLImageElement | null)[]>(new Array(totalFrames).fill(null));
@@ -20,27 +25,22 @@ export default function ScrollCanvasBackground({
   const animFrameIdRef = useRef<number | null>(null);
   const [initialFrameLoaded, setInitialFrameLoaded] = useState(false);
 
-  // Formatter for frame paths: /frames/frame_001.png through /frames/frame_296.png
-  const getFramePath = (index: number) => {
-    const padded = String(index).padStart(3, "0");
-    return `/frames/frame_${padded}.png`;
-  };
-
   // Preload frames progressively
   useEffect(() => {
     let isCancelled = false;
 
     // Load Frame 1 first for immediate render
     const img1 = new Image();
-    img1.src = getFramePath(1);
+    img1.decoding = "async";
     img1.onload = () => {
       if (isCancelled) return;
       imagesRef.current[0] = img1;
       loadedFlagsRef.current[0] = true;
       setInitialFrameLoaded(true);
     };
+    img1.src = getFramePath(1);
 
-    // Load remaining frames in small batches
+    // Keep a small number of requests active instead of serializing the whole sequence.
     const loadRemainingFrames = async () => {
       // Prioritize keyframes (every 4th frame), then fill in remaining
       const keyframeIndices: number[] = [];
@@ -56,24 +56,29 @@ export default function ScrollCanvasBackground({
 
       const loadIndices = [...keyframeIndices, ...remainingIndices];
 
-      for (const idx of loadIndices) {
-        if (isCancelled) break;
-        
-        await new Promise<void>((resolve) => {
-          const img = new Image();
-          img.src = getFramePath(idx);
-          img.onload = () => {
-            if (!isCancelled) {
-              imagesRef.current[idx - 1] = img;
-              loadedFlagsRef.current[idx - 1] = true;
-            }
-            resolve();
-          };
-          img.onerror = () => {
-            resolve(); // Continue on error
-          };
-        });
-      }
+      let nextIndex = 0;
+      const loadWorker = async () => {
+        while (!isCancelled) {
+          const idx = loadIndices[nextIndex++];
+          if (idx === undefined) return;
+
+          await new Promise<void>((resolve) => {
+            const img = new Image();
+            img.decoding = "async";
+            img.onload = () => {
+              if (!isCancelled) {
+                imagesRef.current[idx - 1] = img;
+                loadedFlagsRef.current[idx - 1] = true;
+              }
+              resolve();
+            };
+            img.onerror = () => resolve();
+            img.src = getFramePath(idx);
+          });
+        }
+      };
+
+      await Promise.all(Array.from({ length: 5 }, () => loadWorker()));
     };
 
     loadRemainingFrames();
@@ -84,7 +89,7 @@ export default function ScrollCanvasBackground({
   }, [totalFrames]);
 
   // Find the closest loaded image if target frame is still loading
-  const getClosestLoadedImage = (targetIndex: number): HTMLImageElement | null => {
+  const getClosestLoadedImage = useCallback((targetIndex: number): HTMLImageElement | null => {
     const idx = Math.min(totalFrames, Math.max(1, targetIndex)) - 1;
     if (loadedFlagsRef.current[idx] && imagesRef.current[idx]) {
       return imagesRef.current[idx];
@@ -103,10 +108,10 @@ export default function ScrollCanvasBackground({
     }
 
     return imagesRef.current[0] || null;
-  };
+  }, [totalFrames]);
 
   // Draw current frame on canvas with retina scaling & aspect-ratio cover fill
-  const drawFrame = (frameNum: number) => {
+  const drawFrame = useCallback((frameNum: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -128,6 +133,8 @@ export default function ScrollCanvasBackground({
     ctx.save();
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, viewportWidth, viewportHeight);
+    ctx.fillStyle = "#14110f";
+    ctx.fillRect(0, 0, viewportWidth, viewportHeight);
 
     // Calculate aspect-ratio cover fill (no distortion, no letterboxing)
     const imgRatio = img.naturalWidth / img.naturalHeight;
@@ -149,7 +156,7 @@ export default function ScrollCanvasBackground({
 
     ctx.drawImage(img, drawX, drawY, drawW, drawH);
     ctx.restore();
-  };
+  }, [getClosestLoadedImage]);
 
   // Scroll listener & persistent animation loop
   useEffect(() => {
@@ -214,7 +221,7 @@ export default function ScrollCanvasBackground({
         cancelAnimationFrame(animFrameIdRef.current);
       }
     };
-  }, [scrollContainerRef, totalFrames, initialFrameLoaded]);
+  }, [drawFrame, scrollContainerRef, totalFrames, initialFrameLoaded]);
 
   return (
     <canvas

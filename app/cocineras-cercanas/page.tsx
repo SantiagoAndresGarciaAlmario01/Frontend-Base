@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   MapPin,
-  ChevronDown,
   Search,
   Star,
   Sparkles,
@@ -19,7 +18,10 @@ import {
   Layers,
   Home,
   Utensils,
-  ChevronRight,
+  ShieldCheck,
+  Menu,
+  Banknote,
+  KeyRound,
 } from "lucide-react";
 
 // Types
@@ -33,6 +35,7 @@ interface Cook {
   distanceText: string;
   isOpen: boolean;
   statusNote: string;
+  paymentMethods?: ("Nequi" | "Llaves" | "Efectivo")[];
   handwrittenBio: string;
   featuredDish: {
     name: string;
@@ -47,7 +50,6 @@ interface Cook {
     x: number;
     y: number;
   };
-  streetAddress: string;
 }
 
 // Nearby cooks dataset
@@ -62,6 +64,7 @@ const COOKS_DATA: Cook[] = [
     distanceText: "A 320 m",
     isOpen: true,
     statusNote: "Olla al fuego · Entrega rápida",
+    paymentMethods: ["Nequi", "Llaves", "Efectivo"],
     handwrittenBio: "«Amasé las arepas de choclo esta mañana tempranito, con queso campesino fresco.»",
     featuredDish: {
       name: "Ajiaco Santafereño de la Casa",
@@ -72,7 +75,6 @@ const COOKS_DATA: Cook[] = [
       badge: "El favorito del barrio ♡",
     },
     mapCoords: { x: 440, y: 260 }, // ~320m northwest (inside 500m ring)
-    streetAddress: "Calle 64 # 4-22 (casa blanca con zaguán)",
   },
   {
     id: "don-carlos",
@@ -84,6 +86,7 @@ const COOKS_DATA: Cook[] = [
     distanceText: "A 480 m",
     isOpen: true,
     statusNote: "Cocinando ahora · 6 raciones listas",
+    paymentMethods: ["Nequi", "Efectivo"],
     handwrittenBio: "«Los frijoles cargamanto llevan 5 horas de cocción lenta en olla de barro.»",
     featuredDish: {
       name: "Cazuela Paisa Tradicional",
@@ -94,7 +97,6 @@ const COOKS_DATA: Cook[] = [
       badge: "¡Recién bajado del fogón!",
     },
     mapCoords: { x: 620, y: 410 }, // ~480m southeast (inside 500m ring)
-    streetAddress: "Carrera 5 # 62-18",
   },
   {
     id: "dona-marta",
@@ -106,6 +108,7 @@ const COOKS_DATA: Cook[] = [
     distanceText: "A 740 m",
     isOpen: true,
     statusNote: "Abierta · Almuerzo en curso",
+    paymentMethods: ["Llaves", "Efectivo"],
     handwrittenBio: "«Pollo de campo con verduras que traje esta madrugada de Paloquemao.»",
     featuredDish: {
       name: "Pollo Guisado Campesino",
@@ -116,7 +119,6 @@ const COOKS_DATA: Cook[] = [
       badge: "Sazón de la abuela",
     },
     mapCoords: { x: 310, y: 440 }, // ~740m southwest (between 500m and 1km)
-    streetAddress: "Calle 67 # 7-45",
   },
   {
     id: "dona-lucia",
@@ -128,6 +130,7 @@ const COOKS_DATA: Cook[] = [
     distanceText: "A 890 m",
     isOpen: false,
     statusNote: "Cerrada ahora · Hornea a las 4:00 PM",
+    paymentMethods: ["Nequi", "Llaves"],
     handwrittenBio: "«El secreto es la canela fresca de Ceilán, cáscara de naranja y leche pura de vaca.»",
     featuredDish: {
       name: "Arroz con Leche Cremoso & Canela",
@@ -138,7 +141,6 @@ const COOKS_DATA: Cook[] = [
       badge: "Edición dulce de la tarde",
     },
     mapCoords: { x: 680, y: 220 }, // ~890m northeast (inside 1km ring)
-    streetAddress: "Transversal 3 # 66-10",
   },
   {
     id: "don-luis",
@@ -150,6 +152,7 @@ const COOKS_DATA: Cook[] = [
     distanceText: "A 1,1 km",
     isOpen: true,
     statusNote: "Cocinando ahora · Olla comunitaria",
+    paymentMethods: ["Nequi", "Llaves", "Efectivo"],
     handwrittenBio: "«Caldito espeso con mazorca criolla tierna, plátano verde y cilantro cimarrón fresco.»",
     featuredDish: {
       name: "Sancocho Trifásico Tradicional",
@@ -160,7 +163,6 @@ const COOKS_DATA: Cook[] = [
       badge: "Porción generosa",
     },
     mapCoords: { x: 790, y: 480 }, // ~1120m (beyond 1km ring)
-    streetAddress: "Carrera 2 Este # 60-34",
   },
   {
     id: "maria-elena",
@@ -172,6 +174,7 @@ const COOKS_DATA: Cook[] = [
     distanceText: "A 1,3 km",
     isOpen: false,
     statusNote: "Cerrada por hoy · Vuelve mañana 11:30 AM",
+    paymentMethods: ["Efectivo"],
     handwrittenBio: "«Receta 100% casera con ahogado de tomate de árbol y tajadas de plátano maduro.»",
     featuredDish: {
       name: "Cazuela de Lentejas Caseras",
@@ -182,11 +185,10 @@ const COOKS_DATA: Cook[] = [
       badge: "Opción vegetariana",
     },
     mapCoords: { x: 190, y: 250 }, // ~1350m northwest (beyond 1km ring)
-    streetAddress: "Calle 68 # 9-12",
   },
 ];
 
-type FilterType = "todas" | "500m" | "1km" | "abiertas";
+type FilterType = "todas" | "500m" | "1km" | "1_5km" | "2km" | "abiertas";
 
 export default function CocinerasCercanasPage() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("todas");
@@ -194,6 +196,7 @@ export default function CocinerasCercanasPage() {
   const [hoveredCookId, setHoveredCookId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Filter logic
   const filteredCooks = COOKS_DATA.filter((cook) => {
@@ -209,6 +212,8 @@ export default function CocinerasCercanasPage() {
     // Proximity / status tab filter
     if (activeFilter === "500m") return cook.distanceMeters <= 500;
     if (activeFilter === "1km") return cook.distanceMeters <= 1000;
+    if (activeFilter === "1_5km") return cook.distanceMeters <= 1500;
+    if (activeFilter === "2km") return cook.distanceMeters <= 2000;
     if (activeFilter === "abiertas") return cook.isOpen;
     return true;
   });
@@ -221,9 +226,9 @@ export default function CocinerasCercanasPage() {
   };
 
   return (
-    <div className="min-h-screen relative text-[#2C241E] font-['Outfit',sans-serif] selection:bg-[#F0822D] selection:text-white flex flex-col bg-[#2A1E17]">
+    <div data-theme-page className="min-h-screen relative text-[#2C241E] font-['Outfit',sans-serif] selection:bg-[#F0822D] selection:text-white flex flex-col bg-[#2A1E17]">
       {/* ── SUNLIT KITCHEN BACKGROUND (Consistent with Libretón) ── */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+      <div data-theme-background className="fixed inset-0 z-0 pointer-events-none">
         <Image
           src="/images/kitchen_background.jpg"
           alt="Fondo de cocina tradicional con azulejos y mesa de madera"
@@ -237,7 +242,7 @@ export default function CocinerasCercanasPage() {
 
       {/* ── 1. TOP BRAND NAVIGATION BAR ── */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/80 shadow-xs px-4 md:px-8 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-4">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-2 group shrink-0">
             <div className="w-8 h-8 rounded-full bg-orange-50 border border-orange-200 flex items-center justify-center p-1 transition-transform group-hover:scale-105">
@@ -247,7 +252,7 @@ export default function CocinerasCercanasPage() {
                 className="w-full h-full object-contain"
               />
             </div>
-            <span className="font-['Outfit',sans-serif] font-extrabold text-2xl tracking-tight leading-none">
+            <span className="font-['Outfit',sans-serif] font-extrabold text-xl sm:text-2xl tracking-tight leading-none">
               <span className="text-[#F0822D]">Olla</span>
               <span className="text-[#62B869]">Cercana</span>
             </span>
@@ -255,20 +260,39 @@ export default function CocinerasCercanasPage() {
 
           {/* Location Selector Badge */}
           <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAF6F0] border border-stone-300/80 text-xs font-semibold text-stone-700 shadow-2xs">
-            <div className="w-2 h-2 rounded-full bg-[#62B869] animate-pulse" />
             <MapPin className="w-3.5 h-3.5 text-[#F0822D]" />
-            <span>Tu barrio: <strong>Chapinero Alto, Bogotá</strong></span>
-            <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
+            <span>Zona de muestra: <strong>Chapinero Alto, Bogotá</strong></span>
+          </div>
+
+          {/* Integrated Search Input */}
+          <div className="relative order-3 basis-full mx-0 sm:order-none sm:mx-2 sm:basis-auto sm:flex-1 sm:max-w-xs md:max-w-sm">
+            <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              aria-label="Buscar plato, cocinera o sazón"
+              placeholder="Buscar plato, cocinera o sazón..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-8 py-1.5 rounded-full bg-stone-100 border border-stone-300/80 text-xs text-stone-900 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-[#F0822D] transition-all shadow-inner"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           {/* Quick Nav Links */}
-          <nav className="flex items-center gap-3 sm:gap-6 text-xs font-bold text-stone-700">
+          <nav className="hidden shrink-0 items-center gap-1 sm:gap-3 md:gap-6 text-xs font-bold text-stone-700 sm:flex">
             <Link
               href="/menu"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 hover:bg-orange-50 hover:text-[#F0822D] border border-stone-200/70 transition-all"
+              className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full bg-stone-100 hover:bg-orange-50 hover:text-[#F0822D] border border-stone-200/70 transition-all"
             >
               <Utensils className="w-3.5 h-3.5 text-[#F0822D]" />
-              <span>Ver Libretón</span>
+              <span className="hidden min-[360px]:inline">Ver Libretón</span>
             </Link>
             <Link
               href="/cuenta"
@@ -278,11 +302,18 @@ export default function CocinerasCercanasPage() {
               <span className="hidden md:inline">Mi cuenta</span>
             </Link>
           </nav>
+          <button type="button" aria-expanded={mobileMenuOpen} aria-controls="nearby-mobile-nav" onClick={() => setMobileMenuOpen((open) => !open)} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-stone-300 bg-[#FAF6F0] px-3 text-xs font-bold text-stone-700 sm:hidden">
+            <Menu className="h-4 w-4 text-[#F0822D]" /> Menú
+          </button>
         </div>
+        {mobileMenuOpen && <nav id="nearby-mobile-nav" className="mx-auto mt-3 grid w-full max-w-7xl grid-cols-2 gap-2 border-t border-stone-200 pt-3 text-xs font-bold text-stone-700 sm:hidden">
+          <Link href="/menu" onClick={() => setMobileMenuOpen(false)} className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-stone-100 px-3"><Utensils className="h-4 w-4 text-[#F0822D]" /> Ver Libretón</Link>
+          <Link href="/cuenta" onClick={() => setMobileMenuOpen(false)} className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-stone-100 px-3"><Home className="h-4 w-4" /> Mi cuenta</Link>
+        </nav>}
       </header>
 
       {/* ── 2. OLLACERCANA CHALKBOARD BANNER STRIP (Compact Height) ── */}
-      <section className="relative w-full border-b-4 border-[#3D2E24] shadow-xl overflow-hidden bg-[#1E1712]">
+      <section className="hidden">
         {/* Fixed compact height container for the cropped chalkboard banner */}
         <div className="relative w-full h-28 sm:h-32 md:h-36">
           <Image
@@ -302,6 +333,7 @@ export default function CocinerasCercanasPage() {
               <Search className="w-4 h-4 text-orange-300 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
+                aria-label="Buscar plato, cocinera o sazón"
                 placeholder="Buscar plato, cocinera o sazón..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -321,14 +353,16 @@ export default function CocinerasCercanasPage() {
       </section>
 
       {/* ── 3. CHALKBOARD FILTER TABS (Consistent with Libretón style) ── */}
-      <div className="sticky top-[57px] z-30 bg-[#25282B] border-b-2 border-[#3D2E24] shadow-md px-4 md:px-8 py-2.5">
+      <div className="sm:sticky sm:top-[57px] z-30 bg-[#25282B] border-b-2 border-[#3D2E24] shadow-md px-4 md:px-8 py-2.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 overflow-x-auto scrollbar-none">
           {/* Rounded Tab Bar Group */}
           <div className="flex items-center gap-1 sm:gap-2 p-1 bg-[#1A1C1E] border border-stone-700/60 rounded-full shadow-inner">
             {[
               { id: "todas" as FilterType, label: "Todas", icon: Layers, count: COOKS_DATA.length },
-              { id: "500m" as FilterType, label: "A menos de 500 m", icon: Footprints, count: COOKS_DATA.filter(c => c.distanceMeters <= 500).length },
-              { id: "1km" as FilterType, label: "A menos de 1 km", icon: Bike, count: COOKS_DATA.filter(c => c.distanceMeters <= 1000).length },
+              { id: "500m" as FilterType, label: "500 m", icon: Footprints, count: COOKS_DATA.filter(c => c.distanceMeters <= 500).length },
+              { id: "1km" as FilterType, label: "1 km", icon: Bike, count: COOKS_DATA.filter(c => c.distanceMeters <= 1000).length },
+              { id: "1_5km" as FilterType, label: "1.5 km", icon: Bike, count: COOKS_DATA.filter(c => c.distanceMeters <= 1500).length },
+              { id: "2km" as FilterType, label: "2 km", icon: Compass, count: COOKS_DATA.filter(c => c.distanceMeters <= 2000).length },
               { id: "abiertas" as FilterType, label: "Abiertas ahora", icon: Flame, count: COOKS_DATA.filter(c => c.isOpen).length },
             ].map((tab) => {
               const Icon = tab.icon;
@@ -337,6 +371,7 @@ export default function CocinerasCercanasPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveFilter(tab.id)}
+                  aria-pressed={isActive}
                   className={`relative flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 ${
                     isActive
                       ? "bg-[#2A2E33] text-white shadow-xs"
@@ -412,8 +447,8 @@ export default function CocinerasCercanasPage() {
                 <Compass className="w-3.5 h-3.5" />
               </div>
               <span>Plano Ilustrado de Vecindad</span>
-              <span className="text-stone-400">·</span>
-              <span className="text-stone-500 font-normal hidden sm:inline">
+            <span className="hidden text-stone-400 sm:inline">·</span>
+              <span className="hidden text-stone-500 font-normal lg:inline">
                 {filteredCooks.length} cocinas en esta vista
               </span>
             </div>
@@ -426,8 +461,9 @@ export default function CocinerasCercanasPage() {
           </div>
 
           {/* ILLUSTRATED SVG MAP VIEW */}
-          <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] md:aspect-[21/10] max-h-[580px] overflow-hidden select-none">
+          <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] md:aspect-[21/10] max-h-[580px] overflow-hidden select-none" aria-label="Mapa ilustrado de cocinas cercanas; toca un pin para ver su plato">
             <svg
+              data-map-illustration
               viewBox="0 0 1000 650"
               className="w-full h-full object-cover"
               preserveAspectRatio="xMidYMid slice"
@@ -990,9 +1026,15 @@ export default function CocinerasCercanasPage() {
                     key={`pin-${cook.id}`}
                     transform={`translate(${x}, ${y})`}
                     className="cursor-pointer group transition-transform duration-200"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Ver plato de ${cook.name}, ${cook.distanceText}`}
                     onClick={() => handleSelectCook(cook, true)}
+                    onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); handleSelectCook(cook, true); } }}
                     onMouseEnter={() => setHoveredCookId(cook.id)}
                     onMouseLeave={() => setHoveredCookId(null)}
+                    onFocus={() => setHoveredCookId(cook.id)}
+                    onBlur={() => setHoveredCookId(null)}
                     style={{
                       transformOrigin: `${x}px ${y}px`,
                       filter: isSelected ? "url(#glowOrange)" : "none",
@@ -1117,7 +1159,7 @@ export default function CocinerasCercanasPage() {
                       <rect
                         x="-48"
                         y="-7"
-                        width="96"
+                        width="86"
                         height="18"
                         rx="9"
                         fill={isSelected ? "#F0822D" : "#1E2022"}
@@ -1133,7 +1175,7 @@ export default function CocinerasCercanasPage() {
                         fontWeight="bold"
                         fontFamily="Outfit, sans-serif"
                       >
-                        {cook.name} ({cook.distanceText})
+                        {cook.name} · {cook.distanceText}
                       </text>
                     </g>
                   </g>
@@ -1147,11 +1189,11 @@ export default function CocinerasCercanasPage() {
             <div className="flex items-center gap-2 text-stone-700">
               <span className="font-semibold">Centro:</span>
               <span className="inline-flex items-center gap-1 text-stone-600 bg-stone-200/60 px-2 py-0.5 rounded-full font-medium text-[11px]">
-                📍 Tu ubicación actual
+                <MapPin className="h-3 w-3" aria-hidden="true" /> Zona de muestra: Chapinero Alto
               </span>
               <span className="text-stone-400">|</span>
               <span className="text-stone-600">
-                Pines organizados por distancia real aproximada
+                Pines y distancias ilustrativos
               </span>
             </div>
 
@@ -1174,13 +1216,13 @@ export default function CocinerasCercanasPage() {
           <div className="bg-[#FAF7F2]/95 backdrop-blur-md rounded-3xl p-5 sm:p-6 border border-stone-300/80 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="font-['Playfair_Display',serif] text-2xl sm:text-3xl font-bold text-[#2C241E] flex items-center gap-2">
-                <span>Fogones activos en tu radio</span>
+              <span>Fogones activos en tu radio</span>
                 <span className="text-sm font-sans font-bold px-2.5 py-0.5 rounded-full bg-orange-100 text-[#F0822D] border border-orange-200">
                   {filteredCooks.length} disponibles
                 </span>
               </h2>
               <p className="text-xs text-stone-600 font-normal mt-0.5">
-                Selecciona una cocinera para abrir su ficha completa o pedir desde su Libretón.
+                La información, reseñas, disponibilidad y distancias de esta vista son de ejemplo. La dirección exacta se comparte al confirmar una reserva.
               </p>
             </div>
 
@@ -1199,35 +1241,33 @@ export default function CocinerasCercanasPage() {
               const isSelected = selectedCook?.id === cook.id;
 
               return (
-                <div
+                <article
                   key={cook.id}
-                  onClick={() => handleSelectCook(cook, true)}
-                  className={`cursor-pointer rounded-3xl border transition-all duration-200 overflow-hidden flex flex-col justify-between group shadow-sm hover:shadow-xl ${
+                  className={`relative rounded-xl border transition-all duration-200 overflow-hidden flex flex-col justify-between group shadow-[0_12px_24px_rgba(47,25,12,0.35)] hover:shadow-xl bg-[#55351f] p-2 pt-5 ${
                     isSelected
-                      ? "ring-2 ring-[#F0822D] border-[#F0822D] bg-white scale-[1.01]"
-                      : "border-stone-300/90 bg-white hover:border-[#F0822D]/60"
+                    ? "ring-2 ring-[#F0822D] border-[#F0822D] scale-[1.01]"
+                      : "border-[#6b4528] hover:border-[#F0822D]/60"
                   }`}
+                  style={{ backgroundImage: "repeating-linear-gradient(8deg, rgba(58,29,14,.2) 0px, rgba(58,29,14,.2) 2px, transparent 3px, transparent 9px), linear-gradient(135deg, #714325, #3c2113 52%, #82532f)" }}
                 >
-                  {/* Chalkboard Upper Card Header */}
-                  <div className="relative bg-[#1A1C1E] border-b-4 border-[#3D2E24] p-4 text-white flex flex-col justify-between min-h-[160px] overflow-hidden">
-                    {/* Hanging rope loop doodles */}
-                    <div className="absolute top-1 left-4 w-2 h-2 rounded-full bg-stone-500 border border-stone-800" />
-                    <div className="absolute top-1 right-4 w-2 h-2 rounded-full bg-stone-500 border border-stone-800" />
+                  <div aria-hidden="true" className="absolute z-20 top-0 left-1/2 -translate-x-1/2 -rotate-2 w-24 h-7 bg-[#d6b776]/90 border-x border-[#b99655]/70 shadow-[0_2px_4px_rgba(0,0,0,0.2)]" />
+                  {/* Recipe clipping on aged paper over the wooden counter */}
+                  <div className="relative bg-[#e8d1a3] border border-[#a58150] p-4 pt-6 text-[#493323] flex flex-col justify-between min-h-[170px] overflow-hidden shadow-[inset_0_0_24px_rgba(108,68,30,0.18)] [clip-path:polygon(1%_1%,98%_0%,100%_3%,99%_97%,97%_99%,3%_100%,1%_97%,0%_4%)]" style={{ backgroundImage: "radial-gradient(ellipse at 15% 10%, rgba(255,255,235,.48), transparent 35%), radial-gradient(ellipse at 95% 88%, rgba(135,82,35,.18), transparent 38%), repeating-linear-gradient(4deg, rgba(117,77,41,.035) 0px, rgba(117,77,41,.035) 1px, transparent 2px, transparent 5px)" }}>
 
                     {/* Top Row: Distance & Live Badge */}
                     <div className="flex items-center justify-between gap-2 z-10">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-xs text-[11px] font-semibold text-stone-200 border border-white/15">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#f3dfb9] text-[11px] font-semibold text-stone-700 border border-[#dfc79c]">
                         <MapPin className="w-3 h-3 text-[#F0822D]" />
-                        {cook.distanceText}
+                        {cook.distanceText} · aprox.
                       </span>
 
                       {cook.isOpen ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#62B869]/20 text-[#62B869] text-[11px] font-bold border border-[#62B869]/40">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 text-green-800 text-[11px] font-bold border border-green-300">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#62B869] animate-ping" />
                           Cocinando ahora
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-800 text-stone-400 text-[11px] font-medium border border-stone-700">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-200 text-stone-600 text-[11px] font-medium border border-stone-300">
                           Cerrada hoy
                         </span>
                       )}
@@ -1235,32 +1275,29 @@ export default function CocinerasCercanasPage() {
 
                     {/* Dish Name & Price */}
                     <div className="my-2 z-10">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-[#F0822D]">
-                        Plato estrella de hoy:
+                      <span className="font-['Caveat',cursive] text-sm font-bold text-[#a84c2f]">
+                        Apunte de hoy • Plato estrella:
                       </span>
-                      <h3 className="font-['Playfair_Display',serif] text-xl font-bold leading-snug group-hover:text-[#F0822D] transition-colors">
+                      <h3 className="font-['Caveat',cursive] text-2xl font-bold leading-snug group-hover:text-[#b64b32] transition-colors">
                         {cook.featuredDish.name}
                       </h3>
-                      <div className="text-lg font-extrabold text-[#62B869] font-mono mt-0.5">
+                      <div className="text-xl font-bold text-[#a84c2f] font-['Caveat',cursive] mt-0.5">
                         {cook.featuredDish.formattedPrice}
                       </div>
                     </div>
 
                     {/* Dish Preview Thumbnail */}
-                    <div className="flex items-center justify-between text-xs text-stone-400 border-t border-stone-800/80 pt-2">
-                      <span className="flex items-center gap-1 text-amber-300 font-bold">
+                    <div className="flex items-center justify-between text-xs text-stone-600 border-t border-dashed border-[#c9aa76] pt-2">
+                      <span className="flex items-center gap-1 text-amber-800 font-bold">
                         <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                         {cook.rating}{" "}
-                        <span className="text-stone-400 font-normal">({cook.reviews})</span>
-                      </span>
-                      <span className="text-[11px] text-stone-300 group-hover:text-white transition-colors flex items-center gap-1">
-                        Ver ficha <ChevronRight className="w-3 h-3 text-[#F0822D]" />
+                        <span className="text-stone-500 font-normal">({cook.reviews})</span>
                       </span>
                     </div>
                   </div>
 
                   {/* Lower Card Section: Cook Profile & Handwritten Note */}
-                  <div className="p-4 bg-[#FAF7F2] flex-1 flex flex-col justify-between gap-3">
+                  <div className="p-4 bg-[#e8d1a3] flex-1 flex flex-col justify-between gap-3 border-x border-[#a58150]">
                     {/* Cook Info */}
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-full overflow-hidden relative border-2 border-[#E5DECF] shrink-0 shadow-xs">
@@ -1276,7 +1313,7 @@ export default function CocinerasCercanasPage() {
                           {cook.name}
                         </div>
                         <div className="text-[11px] text-stone-500 truncate">
-                          {cook.streetAddress}
+                          Ubicación aproximada · dirección tras confirmar la reserva
                         </div>
                       </div>
                     </div>
@@ -1289,17 +1326,14 @@ export default function CocinerasCercanasPage() {
                     {/* Action button */}
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectCook(cook, true);
-                      }}
+                      onClick={() => handleSelectCook(cook, true)}
                       className="w-full py-2.5 px-4 rounded-full bg-stone-900 hover:bg-[#F0822D] text-white font-bold text-xs tracking-wide transition-all shadow-xs flex items-center justify-center gap-2 group-hover:bg-[#F0822D]"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>Ver plato y pedir en Libretón</span>
                     </button>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
@@ -1334,11 +1368,11 @@ export default function CocinerasCercanasPage() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="relative w-full max-w-xl bg-white rounded-3xl overflow-hidden shadow-2xl border-4 border-[#3D2E24] my-8 animate-in zoom-in-95 duration-200"
+            className="relative w-full max-w-xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] bg-white rounded-3xl overflow-y-auto shadow-2xl border-4 border-[#3D2E24] my-auto animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
@@ -1372,7 +1406,7 @@ export default function CocinerasCercanasPage() {
 
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 text-stone-200 text-xs font-semibold">
                   <MapPin className="w-3 h-3 text-[#F0822D]" />
-                  {selectedCook.distanceText} de tu casa
+                  {selectedCook.distanceText} · distancia aproximada
                 </span>
               </div>
 
@@ -1436,7 +1470,7 @@ export default function CocinerasCercanasPage() {
                       <h4 className="font-bold text-stone-900 text-base leading-tight">
                         {selectedCook.name}
                       </h4>
-                      <p className="text-xs text-stone-500">{selectedCook.streetAddress}</p>
+                      <p className="text-xs text-stone-500">Ubicación aproximada. La dirección exacta se comparte después de confirmar la reserva.</p>
                     </div>
                   </div>
 
@@ -1457,15 +1491,23 @@ export default function CocinerasCercanasPage() {
                     {selectedCook.handwrittenBio}
                   </p>
                 </div>
+                <div className="rounded-xl border border-stone-200 bg-[#f7f3ed] p-3">
+                  <h5 className="text-xs font-bold text-stone-800">Medios de pago aceptados</h5>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(selectedCook.paymentMethods ?? []).map((method) => <span key={method} className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700"><span className={`grid h-5 w-5 place-items-center rounded-md text-[10px] font-black text-white ${method === "Nequi" ? "bg-[#e6007e]" : method === "Llaves" ? "bg-[#526f42]" : "bg-[#80694d]"}`}>{method === "Nequi" ? "n" : method === "Llaves" ? <KeyRound className="h-3 w-3" /> : <Banknote className="h-3 w-3" />}</span>{method === "Llaves" ? "Llaves (Bre-B)" : method}</span>)}
+                    {!selectedCook.paymentMethods?.length && <span className="text-xs text-stone-500">Consulta los medios de pago antes de reservar.</span>}
+                  </div>
+                  <p className="mt-2 text-[10px] leading-relaxed text-stone-500">Medios ilustrativos de la maqueta; confirma los disponibles con la cocinera.</p>
+                </div>
               </div>
 
               {/* ACTIONS: Link to Libretón / Menu */}
               <div className="pt-2 flex flex-col sm:flex-row gap-3">
                 <Link
                   href="/menu"
-                  className="flex-1 py-3.5 px-6 rounded-full bg-[#F0822D] hover:bg-orange-600 text-white font-bold text-sm tracking-wide transition-all shadow-md flex items-center justify-center gap-2 text-center"
+                  className="flex-1 rounded-full bg-[#F0822D] px-6 py-3.5 text-center text-sm font-bold tracking-wide text-white shadow-md transition-all hover:bg-orange-600"
                 >
-                  <span>Ver su Libretón y pedir →</span>
+                  <span>Ver platos y reservar en OllaCercana →</span>
                 </Link>
 
                 <button
@@ -1473,7 +1515,7 @@ export default function CocinerasCercanasPage() {
                   onClick={() => setIsModalOpen(false)}
                   className="py-3.5 px-6 rounded-full bg-stone-200 hover:bg-stone-300 text-stone-800 font-bold text-sm transition-all"
                 >
-                  Seguir explorando
+                  Cerrar
                 </button>
               </div>
             </div>

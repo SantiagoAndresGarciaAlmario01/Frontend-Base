@@ -12,8 +12,10 @@ import SalesHistoryModal from "@/components/modals/SalesHistoryModal";
 import {
   getStoredReservations,
   getStoredNotifications,
+  addNotification,
   getStoredDishes,
   saveDishes,
+  saveReservations,
   DishItem,
 } from "@/lib/ollacercana-store";
 import {
@@ -71,12 +73,8 @@ interface Reservation {
   rated?: boolean;
   cookName?: string;
   pickupTime?: string;
-}
-
-function homeForRole(role: UserProfile["role"]): string {
-  if (role === "cocinera") return "/cuenta/cocina";
-  if (role === "admin") return "/cuenta/admin";
-  return "/menu";
+  paymentReceipt?: string;
+  paymentReceiptName?: string;
 }
 
 const getDefaultReservations = (): Reservation[] => [
@@ -134,24 +132,24 @@ export default function CocinaPage() {
   useEffect(() => {
     const savedUserJson = localStorage.getItem("ollacercana_user");
     if (!savedUserJson) {
-      router.push("/cuenta");
+      router.replace("/cuenta/sesion-expirada");
       return;
     }
     let parsed: UserProfile;
     try {
       parsed = JSON.parse(savedUserJson);
       if (!parsed.isLoggedIn) {
-        router.push("/cuenta");
+        router.replace("/cuenta/sesion-expirada");
         return;
       }
     } catch (e) {
       console.error(e);
-      router.push("/cuenta");
+      router.replace("/cuenta/sesion-expirada");
       return;
     }
 
     if (parsed.role !== "cocinera") {
-      router.push(homeForRole(parsed.role));
+      router.replace("/cuenta/acceso-denegado");
       return;
     }
 
@@ -181,6 +179,8 @@ export default function CocinaPage() {
             buyerName: sr.buyerName,
             buyerPhone: "3001234567",
             paymentMethod: sr.preferredPaymentMethod,
+            paymentReceipt: sr.paymentReceipt,
+            paymentReceiptName: sr.paymentReceiptName,
             price: `$${sr.totalPrice.toLocaleString("es-CO")}`,
             status:
               sr.status === "PENDIENTE"
@@ -211,7 +211,7 @@ export default function CocinaPage() {
     }
 
     try {
-      setUnreadCount(getStoredNotifications().filter((n) => !n.read).length);
+      setUnreadCount(getStoredNotifications().filter((n) => (n.targetEmail === parsed.email || n.targetEmail === "usuario") && !n.read).length);
     } catch (e) {
       console.error(e);
     }
@@ -252,9 +252,12 @@ export default function CocinaPage() {
   };
 
   const handleConfirmReservation = (resId: string) => {
+    const reservationInfo = getStoredReservations().find((reservation) => reservation.id === resId);
     const updated = reservations.map((r) => (r.id === resId ? { ...r, status: "confirmed" as const } : r));
     setReservations(updated);
     localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+    saveReservations(getStoredReservations().map((reservation) => reservation.id === resId ? { ...reservation, status: "CONFIRMADO" } : reservation));
+    if (reservationInfo) addNotification("Reserva confirmada", `${reservationInfo.cookName} confirmó tu pedido de ${reservationInfo.dishName}.`, reservationInfo.buyerEmail);
   };
 
   const handleOpenRejectModal = (resId: string) => {
@@ -272,6 +275,7 @@ export default function CocinaPage() {
       return;
     }
 
+    const reservationInfo = getStoredReservations().find((reservation) => reservation.id === rejectingResId);
     const updated = reservations.map((r) =>
       r.id === rejectingResId
         ? {
@@ -285,6 +289,8 @@ export default function CocinaPage() {
 
     setReservations(updated);
     localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+    saveReservations(getStoredReservations().map((reservation) => reservation.id === rejectingResId ? { ...reservation, status: "RECHAZADA" } : reservation));
+    if (reservationInfo) addNotification("Solicitud no aceptada", `${reservationInfo.cookName} no pudo aceptar tu pedido de ${reservationInfo.dishName}.`, reservationInfo.buyerEmail);
     setRejectingResId(null);
   };
 
@@ -301,6 +307,11 @@ export default function CocinaPage() {
     });
     setReservations(updated);
     localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+    saveReservations(getStoredReservations().map((reservation) => {
+      const local = updated.find((item) => item.id === reservation.id);
+      if (reservation.id !== resId || !local) return reservation;
+      return { ...reservation, cookConfirmedDelivery: local.cocineraConfirmedDelivery, cookConfirmedPayment: local.cocineraConfirmedPayment };
+    }));
   };
 
   const handleConfirmClosing = (resId: string) => {
@@ -318,6 +329,12 @@ export default function CocinaPage() {
     });
     setReservations(updated);
     localStorage.setItem("ollacercana_reservations", JSON.stringify(updated));
+    saveReservations(getStoredReservations().map((reservation) => reservation.id === resId ? {
+      ...reservation,
+      status: updated.find((item) => item.id === resId)?.compradorClosedAt ? "COMPLETADA" : "CONFIRMADO",
+      cookConfirmedDelivery: true,
+      cookConfirmedPayment: true,
+    } : reservation));
   };
 
   const handleSimulateCompradorConfirm = (resId: string) => {
@@ -339,14 +356,14 @@ export default function CocinaPage() {
 
   if (checkingSession || !user) {
     return (
-      <main className="relative min-h-screen w-full bg-[#14110f] flex items-center justify-center">
+      <main data-theme-page className="relative min-h-screen w-full bg-[#14110f] flex items-center justify-center">
         <p className="text-stone-400 text-sm font-semibold">Cargando...</p>
       </main>
     );
   }
 
   return (
-    <main className="relative min-h-screen w-full bg-[#14110f] text-[#f4efe6] font-['Outfit',sans-serif] overflow-x-hidden flex flex-col justify-between selection:bg-[#F0822D] selection:text-white">
+    <main data-theme-page className="relative min-h-screen w-full bg-[#14110f] text-[#f4efe6] font-['Outfit',sans-serif] overflow-x-hidden flex flex-col justify-between selection:bg-[#F0822D] selection:text-white">
       <AnimatedKitchenBackground />
 
       <header className="relative z-10 w-full pt-10 pb-6 px-6 flex flex-col items-center justify-center text-center">
@@ -356,15 +373,15 @@ export default function CocinaPage() {
       </header>
 
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col items-center justify-center">
-        <div className="w-full max-w-4xl bg-black/75 backdrop-blur-xl border border-white/20 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 my-6">
+        <div className="w-full max-w-4xl bg-black/75 backdrop-blur-xl border-2 border-[#8B5E34]/50 rounded-3xl p-6 sm:p-10 shadow-2xl shadow-black/60 space-y-8 my-6">
           <AccountNav user={user} current="cocina" unreadCount={unreadCount} />
 
           <div className="space-y-6 text-left">
             {/* ONBOARDING & ACTIVACIÓN CON CONSENTIMIENTO (GAP 6) */}
             {!user.isCocineraActive && (
               <div className="p-6 rounded-2xl bg-[#201712] border-2 border-[#F0822D]/60 space-y-4 shadow-xl">
-                <h4 className="text-base font-bold text-amber-200 flex items-center gap-2">
-                  <ChefHat className="w-5 h-5 text-[#F0822D]" />
+                <h4 className="font-['Caveat',cursive] text-2xl font-bold text-[#F4C430] flex items-center gap-2">
+                  <ChefHat className="w-6 h-6 text-[#F0822D]" />
                   <span>Activar Perfil de Cocinera Vecinal</span>
                 </h4>
                 <p className="text-xs text-stone-300 leading-relaxed">
@@ -407,14 +424,14 @@ export default function CocinaPage() {
 
             {/* INGRESO DEL MES & HISTORIAL RESUMIDO (GAP 7 / HU-20) */}
             <div className="p-5 rounded-2xl bg-[#141E17] border border-emerald-500/30 space-y-4 shadow-lg">
-              <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3">
-                <h4 className="text-sm font-bold text-emerald-300 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
+              <div className="flex flex-col gap-3 border-b border-emerald-500/20 pb-3 sm:flex-row sm:items-center sm:justify-between">
+                <h4 className="min-w-0 font-['Caveat',cursive] text-2xl font-bold text-[#F4C430] flex items-start gap-2">
+                  <TrendingUp className="mt-1 h-5 w-5 shrink-0 text-emerald-400" />
                   <span>Ingreso del Mes (Referencial HU-20)</span>
                 </h4>
                 <button
                   onClick={() => setIsSalesHistoryModalOpen(true)}
-                  className="px-3 py-1.5 rounded-xl bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-1.5"
+                  className="self-start px-3 py-1.5 rounded-xl bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-1.5 sm:self-auto"
                 >
                   <BarChart3 className="w-3.5 h-3.5" />
                   Ver Historial Completo
@@ -440,7 +457,7 @@ export default function CocinaPage() {
             {/* ACTION BAR & MIS PLATOS PUBLICADOS (GAP 8 & GAP 9 / HU-24) */}
             <div className="flex flex-wrap items-center justify-between gap-3 bg-[#18231B] border border-amber-600/30 rounded-2xl p-4 shadow-md">
               <div>
-                <h4 className="text-sm font-bold text-amber-200">Mis Platos Publicados y Disponibilidad (HU-24)</h4>
+                <h4 className="font-['Caveat',cursive] text-2xl font-bold text-[#F4C430]">Mis Platos Publicados y Disponibilidad (HU-24)</h4>
                 <p className="text-xs text-amber-300/80">Aumenta, disminuye o marca platos como agotados en tiempo real</p>
               </div>
               <button
@@ -559,9 +576,9 @@ export default function CocinaPage() {
             </div>
 
             {/* RESERVATIONS MANAGEMENT FOR COOK */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-3 pt-4">
-              <h4 className="text-sm font-bold text-[#F0822D] flex items-center gap-2">
-                <ChefHat className="w-4 h-4" />
+            <div className="flex items-center border-b border-white/10 pb-3 pt-4">
+              <h4 className="min-w-0 font-['Caveat',cursive] text-2xl font-bold text-[#F4C430] flex items-start gap-2">
+                <ChefHat className="mt-1 h-6 w-6 shrink-0 text-[#F0822D]" />
                 <span>Gestión de Solicitudes Entrantes</span>
               </h4>
             </div>
@@ -593,7 +610,7 @@ export default function CocinaPage() {
                             : "bg-rose-500/20 text-rose-300"
                         }`}
                       >
-                        {res.status}
+                        {res.status === "pending" ? (res.paymentReceipt ? "Comprobante recibido" : "Pendiente") : res.status === "confirmed" ? "Confirmado" : res.status === "closed" ? "Completado" : "Rechazado"}
                       </span>
                     </div>
                   </div>
@@ -616,6 +633,12 @@ export default function CocinaPage() {
                       <span className="font-bold text-[#F0822D]">{res.price}</span>
                     </div>
                   </div>
+
+                  {res.paymentReceipt && (
+                    <a href={res.paymentReceipt} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-950/40 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-900/60">
+                      <CheckCircle2 className="h-4 w-4" /> Revisar comprobante: {res.paymentReceiptName || "ver archivo"}
+                    </a>
+                  )}
 
                   {res.status === "pending" && (
                     <div className="flex items-center gap-3 pt-2">
@@ -715,17 +738,13 @@ export default function CocinaPage() {
         </Link>
 
         <div className="flex flex-wrap items-center justify-end gap-6 text-xs font-bold tracking-widest uppercase text-stone-300">
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              alert("Centro de Ayuda OllaCercana: Soporte para cocineras y compradores vecinales.");
-            }}
+          <Link
+            href="/ayuda"
             className="hover:text-white flex items-center gap-2 transition-colors"
           >
             <HelpCircle className="w-3.5 h-3.5 text-stone-400" />
             <span>Ayuda</span>
-          </a>
+          </Link>
 
           <span className="text-[11px] text-stone-500 font-mono tracking-normal">v2.4</span>
         </div>
@@ -750,7 +769,7 @@ export default function CocinaPage() {
               <select
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                className="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-2.5 text-xs text-white outline-none"
+                className="w-full bg-[#FBF3E7] border border-[#D9B68C] rounded-xl px-4 py-2.5 text-xs text-[#4A3222] focus:border-[#F0822D] focus:ring-2 focus:ring-[#F0822D]/30 outline-none shadow-sm"
               >
                 <option value="Sin porciones disponibles">Sin porciones disponibles</option>
                 <option value="No alcancé a entregar">No alcancé a entregar</option>
@@ -768,7 +787,7 @@ export default function CocinaPage() {
                 onChange={(e) => setRejectComment(e.target.value)}
                 rows={3}
                 placeholder="Explica brevemente al comprador..."
-                className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-xs text-white outline-none resize-none"
+                className="w-full bg-[#FBF3E7] border border-[#D9B68C] rounded-xl p-3 text-xs text-[#4A3222] placeholder-[#A88B6F] focus:border-[#F0822D] focus:ring-2 focus:ring-[#F0822D]/30 outline-none resize-none shadow-sm"
               />
             </div>
 

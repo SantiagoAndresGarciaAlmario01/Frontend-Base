@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { CommunityReport, getStoredReports, saveReports, UserProfile } from "@/lib/ollacercana-store";
-import { AlertOctagon, X } from "lucide-react";
+import { AlertOctagon, ImagePlus, X } from "lucide-react";
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -61,7 +61,7 @@ export default function ReportModal({
       targetTitle,
       reason,
       explanation: explanation.trim(),
-      evidenceImage: evidenceUrl || "/images/menu_ajiaco.jpg",
+      evidenceImage: evidenceUrl || undefined,
       status: "Abierto",
       createdAt: new Date().toLocaleDateString("es-CO"),
     };
@@ -80,6 +80,7 @@ export default function ReportModal({
       <div className="bg-[#18231B] border border-red-600/40 text-amber-100 rounded-2xl p-6 max-w-md w-full shadow-2xl relative my-6">
         <button
           onClick={onClose}
+          aria-label="Cerrar formulario de reporte"
           className="absolute top-4 right-4 text-amber-300 hover:text-white p-1 rounded-full transition-colors"
         >
           <X className="w-5 h-5" />
@@ -91,7 +92,7 @@ export default function ReportModal({
           </div>
           <div>
             <h3 className="font-playfair text-xl font-bold text-red-200">
-              Reportar {targetType === "publicacion" ? "Publicación" : "Usuario"} (HU-18)
+              Reportar {targetType === "publicacion" ? "publicación" : "perfil"}
             </h3>
             <p className="text-xs text-amber-300/80">Objetivo: {targetTitle}</p>
           </div>
@@ -111,10 +112,11 @@ export default function ReportModal({
 
         <form onSubmit={handleSubmitReport} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-amber-300 mb-1">
+            <label htmlFor="report-reason" className="block text-xs font-semibold text-amber-300 mb-1">
               Motivo del reporte *
             </label>
             <select
+              id="report-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="w-full bg-[#101712] border border-amber-700/50 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500"
@@ -128,11 +130,13 @@ export default function ReportModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-amber-300 mb-1">
+            <label htmlFor="report-explanation" className="block text-xs font-semibold text-amber-300 mb-1">
               Explicación detallada *
             </label>
             <textarea
-              rows={3}
+              id="report-explanation"
+              rows={4}
+              maxLength={1000}
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
               placeholder="Describe lo sucedido o la infracción observada..."
@@ -142,16 +146,41 @@ export default function ReportModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-amber-300 mb-1">
-              Foto de Evidencia (Opcional - Adjuntar URL o Captura)
+            <label htmlFor="report-evidence" className="mb-1 flex items-center gap-1 text-xs font-semibold text-amber-300">
+              <ImagePlus className="h-3.5 w-3.5" /> Evidencia (opcional)
             </label>
             <input
-              type="text"
-              value={evidenceUrl}
-              onChange={(e) => setEvidenceUrl(e.target.value)}
-              placeholder="URL de foto o imagen de evidencia"
-              className="w-full bg-[#101712] border border-amber-700/50 rounded-xl px-3 py-2 text-xs text-white placeholder-amber-500/30 focus:outline-none focus:border-red-500"
+              id="report-evidence"
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                if (!file.type.startsWith("image/")) {
+                  setError("Adjunta una imagen como evidencia.");
+                  event.target.value = "";
+                  return;
+                }
+                if (file.size > 900_000) {
+                  setError("La imagen debe pesar menos de 900 KB para guardarse en esta maqueta.");
+                  event.target.value = "";
+                  return;
+                }
+                const reader = new FileReader();
+                reader.onload = () => {
+                  if (typeof reader.result === "string") {
+                    setEvidenceUrl(reader.result);
+                    setError("");
+                  }
+                };
+                reader.onerror = () => setError("No se pudo leer la imagen. Intenta con otro archivo.");
+                reader.readAsDataURL(file);
+              }}
+              aria-describedby="report-evidence-hint"
+              className="w-full rounded-xl border border-amber-700/50 bg-[#101712] px-3 py-2 text-xs text-white file:mr-3 file:rounded-lg file:border-0 file:bg-[#e8d1a3] file:px-3 file:py-1.5 file:font-semibold file:text-[#493323] focus:outline-none focus:border-red-500"
             />
+            <p id="report-evidence-hint" className="mt-1 text-[11px] text-amber-200/70">Adjunta una foto real (máximo 900 KB). La evidencia es opcional y no se reemplaza con imágenes de muestra.</p>
+            {evidenceUrl && <div className="mt-2 flex items-center gap-2 text-[11px] text-emerald-200"><img src={evidenceUrl} alt="Vista previa de la evidencia adjunta" className="h-12 w-12 rounded-lg border border-emerald-700 object-cover" /> Imagen lista para adjuntar</div>}
           </div>
 
           <div className="pt-2 flex gap-3">

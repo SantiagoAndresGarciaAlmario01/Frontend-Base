@@ -17,7 +17,7 @@ export default function BrandLogo({
 }: BrandLogoProps) {
   // Sizing definitions for icon, wordmark, and tagline
   const wordmarkSizes = {
-    sm: "text-2xl",
+    sm: "text-xl sm:text-2xl",
     md: "text-3xl sm:text-4xl",
     lg: "text-4xl sm:text-5xl md:text-6xl",
     xl: "text-5xl sm:text-7xl md:text-8xl lg:text-9xl",

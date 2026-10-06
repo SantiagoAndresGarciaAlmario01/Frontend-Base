@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import LibretonTransition from "@/components/LibretonTransition";
+import UserPreferencesInitializer from "@/components/UserPreferencesInitializer";
+import AbuelitaHelpChat from "@/components/AbuelitaHelpChat";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +31,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-black text-[#f4f3ef] font-sans selection:bg-amber-400/20 selection:text-amber-200">
-        {children}
+        <UserPreferencesInitializer />
+        <LibretonTransition>{children}</LibretonTransition>
+        <AbuelitaHelpChat />
       </body>
     </html>
   );
