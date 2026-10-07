@@ -46,13 +46,15 @@ Así se ve OllaCercana, siguiendo el camino de una persona desde que entra al si
 
 ### 1. Portada
 
-![Portada de OllaCercana](docs/screenshots/01-portada.png)
+<img width="1911" height="951" alt="01-portada" src="https://github.com/user-attachments/assets/38cb379f-8546-481f-87bb-691e8b5c1265" />
+
 
 Pantalla de bienvenida con la fachada de una casa de barrio, el logo de la marca y el lema *"Comida casera a un paso de tu puerta"*. La indicación **"Desliza para entrar a la cocina"** invita a hacer scroll, y al hacerlo la escena avanza por una secuencia de fotogramas hasta entrar a la casa. En todas las pantallas está disponible el botón flotante **"¿Te ayudo?"**, que abre a la Abuelita, la asistente de ayuda.
 
 ### 2. La cocina interactiva
 
-![Cocina interactiva con accesos a Cocineras, Mapa y Recetas](docs/screenshots/02-cocina-interactiva.png)
+<img width="1916" height="955" alt="02-cocina-interactiva" src="https://github.com/user-attachments/assets/08e0f861-1a53-4597-877a-c341810607d4" />
+
 
 Al entrar a la cocina aparecen tres accesos sobre la escena, cada uno con su etiqueta:
 
@@ -62,13 +64,15 @@ Al entrar a la cocina aparecen tres accesos sobre la escena, cada uno con su eti
 
 ### 3. Descubre la comida casera
 
-![Sección informativa con los pasos para pedir y el reporte de la comunidad](docs/screenshots/03-descubre-comida-casera.png)
+<img width="1916" height="961" alt="03-descubre-comida-casera" src="https://github.com/user-attachments/assets/fdfa0c2d-c5fd-4b30-bafa-5dda95a28794" />
+
 
 Sección informativa con estética de papel y notas pegadas. Resume la propuesta de valor y explica en cuatro pasos cómo funciona la plataforma: explorar el menú, reservar y comunicarse con la cocinera, disfrutar y vivir el sabor casero y la comunidad. Incluye el acceso **"¿Cómo hago un pedido?"** y un **reporte de comunidad** con publicaciones como *Destino: Comunidad* y *20 Reglas de Seguridad e Higiene*.
 
 ### 4. Mapa de cocineras cercanas
 
-![Mapa ilustrado con cocineras cercanas y filtros por distancia](docs/screenshots/04-mapa-cocineras-cercanas.png)
+<img width="1912" height="960" alt="04-mapa-cocineras-cercanas" src="https://github.com/user-attachments/assets/54a73515-515b-48c5-aa5a-2e9b9f339463" />
+
 
 Vista de las cocinas activas alrededor del usuario sobre un **plano ilustrado** de la zona de muestra (Chapinero Alto, Bogotá).
 
@@ -85,13 +89,15 @@ Es la pantalla principal del comprador (`/menu`). Con la sesión iniciada, la ba
 
 #### 5.1 Inicio del menú
 
-![Inicio del menú con Antojo del Día y filtros por categoría](docs/screenshots/05a-menu-inicio.png)
+<img width="1600" height="929" alt="05a-menu-inicio" src="https://github.com/user-attachments/assets/d7490957-1a95-4b69-ac4a-bd5857b86533" />
+
 
 Abre con el mensaje *"Hoy se come rico"* y la sección **Antojo del Día**: tarjetas con los platos de cocinas cercanas disponibles en el momento, cada una con la cocinera, su calificación, la distancia y el botón **Agregar al pedido**. A un lado, el bloque **Ubica tu antojo** presenta a la Abuela OllaCercana. En la parte inferior hay filtros rápidos por categoría: Todos, Almuerzos, Sopas, Vegetariano, Postres y un panel de **Filtros** adicionales.
 
 #### 5.2 Recetario
 
-![Recetario con las tarjetas de cada plato y el carrito de pedido](docs/screenshots/05b-menu-recetario.png)
+<img width="1600" height="818" alt="05b-menu-recetario" src="https://github.com/user-attachments/assets/a4faa39e-6f55-4d71-969e-ad10bf3bcabc" />
+
 
 Cuadrícula de platos publicados por las cocineras del barrio. Cada tarjeta muestra:
 
@@ -105,25 +111,29 @@ En el costado derecho se encuentra el carrito **"Tu pedido"**, con el botón **�
 
 #### 5.3 Sello Olla Verde
 
-![Hero con el sello Olla Verde, distintivo del conjunto](docs/screenshots/05c-menu-sello-olla-verde.png)
+<img width="1600" height="840" alt="05c-menu-sello-olla-verde" src="https://github.com/user-attachments/assets/f9d6aa32-1dc4-4dcf-ad65-a48c74736e69" />
+
 
 Bloque destacado *"El sabor de casa, más cerca"* con el acceso **Ver platos del día**. Presenta el sello **Olla Verde**, un distintivo del conjunto con vigencia de 7 días que se obtiene cuando el conjunto vende todas las porciones publicadas durante la semana.
 
 #### 5.4 Una meta que se cocina entre todos
 
-![Ilustración del Libretón Olla Verde y el reconocimiento comunitario](docs/screenshots/05d-menu-meta-compartida.png)
+<img width="1600" height="827" alt="05d-menu-meta-compartida" src="https://github.com/user-attachments/assets/ee2def97-610a-4f67-985b-97f56deadb14" />
+
 
 Sección que explica la idea detrás del sello como una meta compartida de la comunidad: el reconocimiento de cocina sostenible se otorga a las cocineras que venden todas sus porciones durante siete días seguidos. Incluye la llamada **"Quiero ofrecer mis platillos"** dirigida a quienes quieran empezar a cocinar para sus vecinos.
 
 #### 5.5 De la olla a tu mesa
 
-![Cómo funciona la plataforma en tres pasos y la insignia Vecino Fiel](docs/screenshots/05e-menu-como-funciona.png)
+<img width="1600" height="452" alt="05e-menu-como-funciona" src="https://github.com/user-attachments/assets/e3bb7e81-791b-4f64-aa34-136c8f9f6514" />
+
 
 Cierre del menú con el resumen del proceso en tres pasos: **1. Explora el libretón**, **2. Reserva tu porción** y **3. Disfruta y comparte**, acordando la entrega directamente con la vecina. Debajo aparece la insignia **Vecino Fiel**, que se gana al completar tres entregas en un mes con la misma cocinera, junto con el acceso **"¿Cocinas para tu barrio?"** para registrarse como cocinera.
 
 ### 6. Acceso a la cuenta
 
-![Pantalla de inicio de sesión](docs/screenshots/06-acceso.png)
+<img width="1914" height="951" alt="06-acceso" src="https://github.com/user-attachments/assets/13517fa3-6156-487b-ae23-765f2f3497b9" />
+
 
 Pantalla **"Entra a tu cocina"**, con la Abuelita de fondo y un formulario de acceso:
 
